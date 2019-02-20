@@ -1,21 +1,30 @@
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 28
+
+
+
     defaultConfig {
-        applicationId "com.gyr.disvisibledemo"
         minSdkVersion 22
         targetSdkVersion 28
         versionCode 1
-        versionName "1.0"
+        versionName "1.2"
+
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
     }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+        debug {
+            debuggable true
+        }
     }
+
 }
 
 dependencies {
@@ -25,7 +34,6 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation 'org.xutils:xutils:3.3.36'
-    implementation 'com.android.support:recyclerview-v7:28.0.0'
-    implementation project(':activity_entry_name')
+    implementation files('libs/androidsvg-1.2.0.jar')
+    implementation files('libs/nineoldandroids-2.4.0.jar')
 }
