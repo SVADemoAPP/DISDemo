@@ -1,11 +1,5 @@
 package net.yoojia.imagemap;
 
-import net.yoojia.imagemap.animator.MapHandle;
-import net.yoojia.imagemap.animator.MapHandleImp;
-import net.yoojia.imagemap.event.RotateGestureDetector;
-import net.yoojia.imagemap.event.RotateGestureDetector.SimpleOnRotateGestureListener;
-import net.yoojia.imagemap.util.BaZhanUtil;
-import net.yoojia.imagemap.util.ImageViewHelper;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -17,697 +11,537 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
+import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
+import android.view.View.OnTouchListener;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.ImageView;
-
 import com.nineoldandroids.animation.AnimatorSet;
+import net.yoojia.imagemap.animator.MapHandle;
+import net.yoojia.imagemap.animator.MapHandleImp;
+import net.yoojia.imagemap.core.Shape;
+import net.yoojia.imagemap.event.RotateGestureDetector;
+import net.yoojia.imagemap.event.RotateGestureDetector.SimpleOnRotateGestureListener;
+import net.yoojia.imagemap.util.BaZhanUtil;
+import net.yoojia.imagemap.util.ImageViewHelper;
 
-/**
- * TouchImageView设计为一个具有独立完整功能的View。可缩放，拖动图片。 TouchImageView - A full View with
- * Scale/Drag support.
- */
-@SuppressWarnings("deprecation")
-public class TouchImageView1 extends ImageView implements
-		OnGlobalLayoutListener, MapHandle {
-	private final Matrix imageUsingMatrix = new Matrix();
-	private final ImageViewHelper mImageViewHelper = new ImageViewHelper();
-	private final float[] matrixValues = new float[9];
+public class TouchImageView1 extends ImageView implements OnGlobalLayoutListener, MapHandle {
+    private static final float FRICTION = 0.0f;
+    private boolean bLongClick;
+    private GestureMode curGestureMode;
+    private PointF downPoint;
+    private float dragVelocity;
+    private final Matrix imageUsingMatrix;
+    private boolean isAllowRotate;
+    protected boolean isAllowTranslate;
+    private boolean isNewImageSVG;
+    private float lastOffsetX;
+    private float lastOffsetY;
+    private Shape longClickShape;
+    private BaZhanUtil mBaZhanUtil;
+    private GestureDetector mGestureDetector;
+    private final ImageViewHelper mImageViewHelper;
+    protected MapHandleImp mMapHandle;
+    private OnLongClickListener1 mOnLongClickListener;
+    private OnRotateListener mOnRotateListener;
+    private RotateGestureDetector mRotateGestureDetector;
+    private ScaleGestureDetector mScaleDetector;
+    public OnSingleClickListener mSingleClickListener;
+    protected int mView_height;
+    protected int mView_width;
+    private final float[] matrixValues;
+    private PointF mid;
+    private MyOnTouchListener myOnTouchListener;
+    private float saveRotate;
+    private OnTouchListener touchListener;
 
-	/* 惯性系数 */
-	private static final float FRICTION = 0.0f;
-
-	private PointF mid = new PointF();
-
-	private ScaleGestureDetector mScaleDetector;
-	private RotateGestureDetector mRotateGestureDetector;
-	private GestureDetector mGestureDetector;
-
-	private boolean isAllowRotate = true;
-	protected boolean isAllowTranslate = false;
-
-	protected int mView_width;
-	protected int mView_height;
-	private boolean isNewImageSVG = true;
-	protected MapHandleImp mMapHandle;
-	private BaZhanUtil mBaZhanUtil;
-
-	private boolean canChange=true;
-
-	public TouchImageView1(Context context) {
-		this(context, null);
-	}
-
-	public TouchImageView1(Context context, AttributeSet attrs) {
-		super(context, attrs);
-		initialized();
-	}
-
-	protected void initialized() {
-		super.setClickable(true);
-		setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-		setScaleType(ScaleType.MATRIX);
-		setImageMatrix(imageUsingMatrix);
-		setOnTouchListener(touchListener);
-		mMapHandle = new MapHandleImp(this);
-		mScaleDetector = new ScaleGestureDetector(getContext(),
-				new ScaleListener());
-		mRotateGestureDetector = new RotateGestureDetector(getContext(),
-				new MyRotateGesture());
-		mGestureDetector = new GestureDetector(getContext(),
-				new MyGestureDetectorListener());
-	}
-
-	/**
-	 * 放大固定倍数
-	 * 
-	 */
-	public void pullScale() {
-		if (!mMapHandle.isAniming() && mImageViewHelper.havePullScale) {
-			mMapHandle.toScaleAnimator(getCurrentScale(),
-					getCurrentScale() * 1.6f, new PointF(mView_width / 2,
-							mView_height / 2));
-		}
-	}
-
-	/**
-	 * 放大固定倍数
-	 * 
-	 */
-	public void pullScale(PointF mid) {
-		if (!mMapHandle.isAniming() && mImageViewHelper.havePullScale) {
-			float offsetX = mView_width / 2f - mid.x;
-			float offsetY = mView_height / 2f - mid.y;
-			if (offsetX >= -8 && offsetX <= 8 && offsetY >= -8 && offsetY <= 8) {
-				postMatrixTranslate(offsetX, offsetY);
-				postImageMatrix();
-				mMapHandle.toScaleAnimator(getCurrentScale(),
-						getCurrentScale() * 1.6f, mid);
-				return;
-			}
-			AnimatorSet set = mMapHandle.getAnimatorSet();
-			set.play(mMapHandle.getTranslateAnimAtor(offsetX, offsetY)).with(
-					mMapHandle.getScaleAnimator(getCurrentScale(),
-							getCurrentScale() * 1.6f, mid));
-			set.start();
-		}
-	}
-
-	/**
-	 * 縮小
-	 * 
-	 */
-	public void zoomScale() {
-		if (!mMapHandle.isAniming() && mImageViewHelper.haveZoomScale) {
-			mMapHandle.toScaleAnimator(getCurrentScale(),
-					getCurrentScale() * 0.625f,
-					mImageViewHelper.getCenterPoint(imageUsingMatrix));
-		}
-	}
-
-	/**
-	 * 旋轉回到原點
-	 * 
-	 */
-	private void rotateToZero() {
-		// if (saveRotate < 4 && saveRotate > -4) {
-		// postMatrixRotate(saveRotate,
-		// mImageViewHelper.getCenterPoint(imageUsingMatrix));
-		// if (offsetX >= -4 && offsetX <= 4 && offsetY >= -4 && offsetY <= 4) {
-		// postMatrixTranslate(offsetX, offsetY);
-		// postImageMatrix();
-		// } else {
-		// translateOffset(offsetX, offsetY);
-		// }
-		// return;
-		// }
-		if (mMapHandle.isAniming()) {
-			return;
-		}
-		// if (offsetX >= -4 && offsetX <= 4 && offsetY >= -4 && offsetY <= 4) {
-		// postMatrixTranslate(offsetX, offsetY);
-		// postImageMatrix();
-		// mMapHandle.toRotateAnimator(saveRotate, center);
-		// return;
-		// }
-		PointF center = mImageViewHelper.getCenterPoint(imageUsingMatrix);
-		float offsetX = mView_width / 2f - center.x;
-		float offsetY = mView_height / 2f - center.y;
-		AnimatorSet animatorSet = mMapHandle.getAnimatorSet();
-		animatorSet
-				.play(mMapHandle.getTranslateAnimAtor(offsetX, offsetY))
-				.with(mMapHandle.getScaleAnimator(getScale(),
-						mBaZhanUtil.initScale, center))
-				.with(mMapHandle.getRotateAnimator(saveRotate, (float) mBaZhanUtil.initAngle,  center));
-		animatorSet.start();
-	}
-	
-	/**
-	 * 回归初始位置
-	 * 
-	 */
-	public void releaseImageShow(){
-		rotateToZero();
-	}
-
-	/**
-	 * 移动偏移量
-	 * 
-	 * @param offsetX
-	 * @param offsetY
-	 */
-	public void translateOffset(float offsetX, float offsetY) {
-		mMapHandle.toTranslateAnimAtor(offsetX, offsetY);
-	}
-
-	@Override
-	protected void onAttachedToWindow() {
-		super.onAttachedToWindow();
-		getViewTreeObserver().addOnGlobalLayoutListener(this);
-	}
-
-	@Override
-	protected void onDetachedFromWindow() {
-		super.onDetachedFromWindow();
-		getViewTreeObserver().removeOnGlobalLayoutListener(this);
-	}
-
-	@Override
-	public void onGlobalLayout() {
-		mView_width = getWidth();
-		mView_height = getHeight();
-		mImageViewHelper.setViewSize(mView_width, mView_height);
-		Drawable d = getDrawable(); // 获取当前显示的图片
-		if (d == null)
-			return;
-
-		if (!isNewImageSVG)
-			return;
-		isNewImageSVG = false;
-		saveRotate = 0;
-		if (mOnRotateListener != null) {
-			mOnRotateListener.onRotate(saveRotate);
-		}
-		int dw = d.getIntrinsicWidth();
-		int dh = d.getIntrinsicHeight();
-
-		mImageViewHelper.setDrawableSize(dw, dh);
-		mImageViewHelper.initImageMatrix(imageUsingMatrix);
-		
-		//TODO: 巴展定制 --------------------------------------------------------------------
-		
-//		float angle = 90.1f;
-		float scale = mView_height * 1f / dw;
-		mBaZhanUtil = new BaZhanUtil(0, scale);
-		PointF mid = new PointF(
-                mView_width / 2f, mView_height / 2f);
-        postMatrixScale(mBaZhanUtil.initScale / getScale(), mid);
-        postMatrixRotate(mBaZhanUtil.initAngle, mid);
-
-		saveRotate -= mBaZhanUtil.initAngle;
-		mImageViewHelper.haveZoomScale = true;
-		if (mImageViewHelper.mOnMinZoomCallback != null) {
-			mImageViewHelper.mOnMinZoomCallback.onMinZoom(true);
-		}
-		
-		//TODO: 巴展定制 --------------------------------------------------------------------
-		
-		postImageMatrix();
-	}
-
-	/**
-	 * 设置是否允许单击移动到中心
-	 * 
-	 * @return
-	 */
-	public boolean isAllowTranslate() {
-		return isAllowTranslate;
-	}
-
-	public void setAllowTranslate(boolean isAllowTranslate) {
-		this.isAllowTranslate = isAllowTranslate;
-	}
-
-	public boolean isAllowRotate() {
-		return isAllowRotate;
-	}
-
-	public void setAllowRotate(boolean isAllowRotate) {
-		this.isAllowRotate = isAllowRotate;
-		if (!isAllowRotate && saveRotate != 0) {
-			rotateToZero();
-		}
-	}
-
-	public float getScale() {
-		return mImageViewHelper.getCurrentScale(imageUsingMatrix);
-	}
-
-	public ImageViewHelper getHelper() {
-		return mImageViewHelper;
-	}
-
-	private GestureMode curGestureMode = GestureMode.none;
-
-	private OnTouchListener touchListener = new OnTouchListener() {
-		final static float MAX_VELOCITY = 1.2f;
-		private int mLastPointerCount = -1;
-		private long dragTime;
-		private long lastDragTime;
-
-		private PointF mDownPoint;
-		private PointF mMovePoint;
-        private boolean isTouch;
-        long timeTag = 0;
-
-		@Override
-		public boolean onTouch(View v, MotionEvent event) {
-			int pointerCount = event.getPointerCount();
-
-			if (pointerCount > 2)
-				return false;
-
-			if (pointerCount != mLastPointerCount) {
-				if (pointerCount == 1) {
-					mDownPoint = new PointF(event.getX(), event.getY());
-					curGestureMode = GestureMode.drag;
-					lastDragTime = System.currentTimeMillis();
-				} else {
-					curGestureMode = GestureMode.rotate_scale;
-				}
-				mLastPointerCount = pointerCount;
-			}
-
-			if (curGestureMode == GestureMode.rotate_scale)
-				midPoint(mid, event); // 獲取手指中心點
-
-			mScaleDetector.onTouchEvent(event);
-			mGestureDetector.onTouchEvent(event);
-
-			if (isAllowRotate)
-				mRotateGestureDetector.onTouchEvent(event);
-			
-			switch (event.getAction() & MotionEvent.ACTION_MASK) {
-			case MotionEvent.ACTION_DOWN:
-				mDownPoint = new PointF(event.getX(), event.getY());
-				break;
-			case MotionEvent.ACTION_POINTER_DOWN:
-				midPoint(mid, event);
-				break;
-			case MotionEvent.ACTION_MOVE:
-				if (curGestureMode == GestureMode.drag) {
-					mMovePoint = new PointF(event.getX(), event.getY());
-					if (Math.abs(mMovePoint.x - mDownPoint.x) > 8
-							|| Math.abs(mMovePoint.y - mDownPoint.y) > 8) {
-						dragTime = System.currentTimeMillis();
-						timeTag = dragTime - lastDragTime;
-						if(timeTag == 0)
-						{
-							timeTag = 100;
-						}
-						dragVelocity = new Float(distanceBetween(mMovePoint,
-								mDownPoint)
-								/ timeTag
-								* FRICTION).floatValue();
-						Log.e(">>>>",(dragTime - lastDragTime)+"s");
-						dragVelocity = Math.min(MAX_VELOCITY, dragVelocity);
-						lastDragTime = dragTime;
-
-						lastOffsetX = mMovePoint.x - mDownPoint.x;
-						lastOffsetY = mMovePoint.y - mDownPoint.y;
-
-						if(canChange) {
-							postMatrixTranslate(lastOffsetX, lastOffsetY);
-							mDownPoint.set(mMovePoint);
-						}
-					}
-				}
-				break;
-			case MotionEvent.ACTION_UP:
-			case MotionEvent.ACTION_POINTER_UP:
-			case MotionEvent.ACTION_CANCEL:
-				if (curGestureMode == GestureMode.drag) {
-					curGestureMode = GestureMode.toMove;
-					inertiaMove();
-				} else {
-					curGestureMode = GestureMode.none;
-				}
-				mLastPointerCount = -1;
-				if (getCenterByImage()!=null)
-				{
-					if(mOnCenterPointListener!=null)
-					{
-						mOnCenterPointListener.onCenter(getCenterByImage());
-					}
-				}
-				break;
-			}
-			postImageMatrix();
-			return true;
-		}
-	};
-
-	public void setCanChange(boolean canChange) {
-		this.canChange = canChange;
-	}
-
-	/**
-	 * View被点击
-	 * 
-	 * @param xOnView
-	 *            View上的X坐标
-	 * @param yOnView
-	 *            View上的Y坐标
-	 */
-	protected boolean onViewClick(float xOnView, float yOnView) {
-		return false;
-	}
-
-	private float lastOffsetX;
-	public float getLastOffsetX()
-    {
-        return lastOffsetX;
+    private enum GestureMode {
+        toMove,
+        doubleTap,
+        drag,
+        rotate_scale,
+        none
     }
 
-    public void setLastOffsetX(float lastOffsetX)
-    {
+    private static class MyBitmapDrawable extends BitmapDrawable {
+        public MyBitmapDrawable(Resources res, Bitmap bitmap) {
+            super(res, bitmap);
+        }
+    }
+
+    private class MyGestureDetectorListener extends SimpleOnGestureListener {
+        private MyGestureDetectorListener() {
+        }
+
+        /* synthetic */ MyGestureDetectorListener(TouchImageView1 touchImageView1, MyGestureDetectorListener myGestureDetectorListener) {
+            this();
+        }
+
+        public boolean onDoubleTap(MotionEvent e) {
+            if (TouchImageView1.this.mImageViewHelper.havePullScale) {
+                float centerX = e.getX();
+                float centerY = e.getY();
+                if (TouchImageView1.this.mImageViewHelper.pointInArea(TouchImageView1.this.imageUsingMatrix, TouchImageView1.this.saveRotate, new PointF(centerX, centerY))) {
+                    TouchImageView1.this.mid.set(centerX, centerY);
+                    TouchImageView1.this.pullScale(TouchImageView1.this.mid);
+                }
+            }
+            return true;
+        }
+
+        public boolean onSingleTapUp(MotionEvent e) {
+            PointF cur = new PointF(e.getX(), e.getY());
+            if (TouchImageView1.this.mImageViewHelper.pointInArea(TouchImageView1.this.imageUsingMatrix, TouchImageView1.this.saveRotate, cur)) {
+                PointF point = TouchImageView1.this.mImageViewHelper.getSinglePoint(TouchImageView1.this.imageUsingMatrix, TouchImageView1.this.saveRotate, cur);
+                if (TouchImageView1.this.mSingleClickListener != null) {
+                    TouchImageView1.this.mSingleClickListener.onSingle(point);
+                }
+                TouchImageView1.this.onViewClick(point.x, point.y);
+            }
+            return true;
+        }
+
+        public void onLongPress(MotionEvent e) {
+            if (TouchImageView1.this.mImageViewHelper.pointInArea(TouchImageView1.this.imageUsingMatrix, TouchImageView1.this.saveRotate, new PointF(e.getX(), e.getY())) && TouchImageView1.this.mOnLongClickListener != null) {
+                TouchImageView1.this.bLongClick = true;
+                TouchImageView1.this.longClickShape = TouchImageView1.this.onViewLongClickShape(TouchImageView1.this.downPoint.x, TouchImageView1.this.downPoint.y);
+            }
+        }
+    }
+
+    public interface MyOnTouchListener {
+        void onTouch(boolean z);
+    }
+
+    public interface OnLongClickListener1 {
+        void onLongClick(Shape shape);
+    }
+
+    public interface OnRotateListener {
+        void onRotate(float f);
+    }
+
+    public interface OnSingleClickListener {
+        void onSingle(PointF pointF);
+    }
+
+    private class ScaleListener extends SimpleOnScaleGestureListener {
+        private ScaleListener() {
+        }
+
+        /* synthetic */ ScaleListener(TouchImageView1 touchImageView1, ScaleListener scaleListener) {
+            this();
+        }
+
+        public boolean onScale(ScaleGestureDetector detector) {
+            TouchImageView1.this.postMatrixScale(detector.getScaleFactor(), TouchImageView1.this.mid);
+            return true;
+        }
+    }
+
+    private class MyRotateGesture extends SimpleOnRotateGestureListener {
+        private MyRotateGesture() {
+        }
+
+        /* synthetic */ MyRotateGesture(TouchImageView1 touchImageView1, MyRotateGesture myRotateGesture) {
+            this();
+        }
+
+        public boolean onRotate(RotateGestureDetector detector) {
+            float toRotate = detector.getRotationDegreesDelta();
+            if (toRotate > 360.0f || toRotate < -360.0f) {
+                toRotate %= 360.0f;
+            }
+            if (toRotate == 0.0f) {
+                return false;
+            }
+            TouchImageView1.this.postMatrixRotate(-toRotate, new PointF(TouchImageView1.this.mid.x, TouchImageView1.this.mid.y));
+            return true;
+        }
+    }
+
+    public TouchImageView1(Context context) {
+        this(context, null);
+    }
+
+    public TouchImageView1(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        this.imageUsingMatrix = new Matrix();
+        this.mImageViewHelper = new ImageViewHelper();
+        this.matrixValues = new float[9];
+        this.mid = new PointF();
+        this.isAllowRotate = true;
+        this.isAllowTranslate = false;
+        this.isNewImageSVG = true;
+        this.curGestureMode = GestureMode.none;
+        this.touchListener = new OnTouchListener() {
+            static final float MAX_VELOCITY = 1.2f;
+            private PointF curPoint = new PointF();
+            private long dragTime;
+            private boolean isTouch;
+            private long lastDragTime;
+            private PointF mDownPoint;
+            private int mLastPointerCount = -1;
+            private PointF mMovePoint = new PointF();
+            private PointF point1;
+            long timeTag = 0;
+
+            public boolean onTouch(View v, MotionEvent event) {
+                int pointerCount = event.getPointerCount();
+                if (pointerCount > 2) {
+                    return false;
+                }
+                if (pointerCount != this.mLastPointerCount) {
+                    if (pointerCount == 1) {
+                        this.mDownPoint = new PointF(event.getX(), event.getY());
+                        TouchImageView1.this.curGestureMode = GestureMode.drag;
+                        this.lastDragTime = System.currentTimeMillis();
+                    } else {
+                        TouchImageView1.this.curGestureMode = GestureMode.rotate_scale;
+                    }
+                    this.mLastPointerCount = pointerCount;
+                }
+                if (TouchImageView1.this.curGestureMode == GestureMode.rotate_scale) {
+                    TouchImageView1.this.midPoint(TouchImageView1.this.mid, event);
+                }
+                TouchImageView1.this.mScaleDetector.onTouchEvent(event);
+                TouchImageView1.this.mGestureDetector.onTouchEvent(event);
+                if (TouchImageView1.this.isAllowRotate) {
+                    TouchImageView1.this.mRotateGestureDetector.onTouchEvent(event);
+                }
+                switch (event.getAction() & 255) {
+                    case 0:
+                        this.mDownPoint = new PointF(event.getX(), event.getY());
+                        TouchImageView1.this.downPoint = TouchImageView1.this.mImageViewHelper.getSinglePoint(TouchImageView1.this.imageUsingMatrix, TouchImageView1.this.saveRotate, this.mDownPoint);
+                        TouchImageView1.this.bLongClick = false;
+                        if (TouchImageView1.this.myOnTouchListener != null) {
+                            TouchImageView1.this.myOnTouchListener.onTouch(true);
+                            break;
+                        }
+                        break;
+                    case 1:
+                        if (TouchImageView1.this.mOnLongClickListener != null && TouchImageView1.this.bLongClick) {
+                            TouchImageView1.this.mOnLongClickListener.onLongClick(TouchImageView1.this.longClickShape);
+                        }
+                        if (TouchImageView1.this.myOnTouchListener != null) {
+                            TouchImageView1.this.myOnTouchListener.onTouch(false);
+                            break;
+                        }
+                        break;
+                    case 2:
+                        if (TouchImageView1.this.curGestureMode == GestureMode.drag) {
+                            this.mMovePoint.x = event.getX();
+                            this.mMovePoint.y = event.getY();
+                            if (Math.abs(this.mMovePoint.x - this.mDownPoint.x) > 8.0f || Math.abs(this.mMovePoint.y - this.mDownPoint.y) > 8.0f) {
+                                this.dragTime = System.currentTimeMillis();
+                                this.timeTag = this.dragTime - this.lastDragTime;
+                                if (this.timeTag == 0) {
+                                    this.timeTag = 100;
+                                }
+                                TouchImageView1.this.dragVelocity = new Float((TouchImageView1.this.distanceBetween(this.mMovePoint, this.mDownPoint) / ((double) this.timeTag)) * 0.0d).floatValue();
+                                TouchImageView1.this.dragVelocity = Math.min(MAX_VELOCITY, TouchImageView1.this.dragVelocity);
+                                this.lastDragTime = this.dragTime;
+                                TouchImageView1.this.lastOffsetX = this.mMovePoint.x - this.mDownPoint.x;
+                                TouchImageView1.this.lastOffsetY = this.mMovePoint.y - this.mDownPoint.y;
+                                if (TouchImageView1.this.bLongClick) {
+                                    this.curPoint.x = event.getX();
+                                    this.curPoint.y = event.getY();
+                                    if (TouchImageView1.this.mImageViewHelper.pointInArea(TouchImageView1.this.imageUsingMatrix, TouchImageView1.this.saveRotate, this.curPoint)) {
+                                        this.point1 = TouchImageView1.this.mImageViewHelper.getSinglePoint(TouchImageView1.this.imageUsingMatrix, TouchImageView1.this.saveRotate, this.curPoint);
+                                        TouchImageView1.this.onViewLongClickShapeMove(this.point1.x, this.point1.y);
+                                    }
+                                } else {
+                                    TouchImageView1.this.postMatrixTranslate(TouchImageView1.this.lastOffsetX, TouchImageView1.this.lastOffsetY);
+                                }
+                                this.mDownPoint.set(this.mMovePoint);
+                                break;
+                            }
+                        }
+                        break;
+                    case 3:
+                    case 6:
+                        if (TouchImageView1.this.curGestureMode == GestureMode.drag) {
+                            TouchImageView1.this.curGestureMode = GestureMode.toMove;
+                            TouchImageView1.this.inertiaMove();
+                        } else {
+                            TouchImageView1.this.curGestureMode = GestureMode.none;
+                        }
+                        this.mLastPointerCount = -1;
+                        break;
+                    case 5:
+                        TouchImageView1.this.midPoint(TouchImageView1.this.mid, event);
+                        break;
+                }
+                TouchImageView1.this.postImageMatrix();
+                return true;
+            }
+        };
+        this.saveRotate = 0.0f;
+        initialized();
+    }
+
+    protected void initialized() {
+        super.setClickable(true);
+        setLayerType(1, null);
+        setScaleType(ScaleType.MATRIX);
+        setImageMatrix(this.imageUsingMatrix);
+        setOnTouchListener(this.touchListener);
+        this.mMapHandle = new MapHandleImp(this);
+        this.mScaleDetector = new ScaleGestureDetector(getContext(), new ScaleListener());
+        this.mRotateGestureDetector = new RotateGestureDetector(getContext(), new MyRotateGesture());
+        this.mGestureDetector = new GestureDetector(getContext(), new MyGestureDetectorListener());
+    }
+
+    public void pullScale() {
+        if (!this.mMapHandle.isAniming() && this.mImageViewHelper.havePullScale) {
+            this.mMapHandle.toScaleAnimator(getCurrentScale(), getCurrentScale() * 1.6f, new PointF((float) (this.mView_width / 2), (float) (this.mView_height / 2)));
+        }
+    }
+
+    public void pullScale(PointF mid) {
+        if (!this.mMapHandle.isAniming() && this.mImageViewHelper.havePullScale) {
+            float offsetX = (((float) this.mView_width) / 2.0f) - mid.x;
+            float offsetY = (((float) this.mView_height) / 2.0f) - mid.y;
+            if (offsetX < -8.0f || offsetX > 8.0f || offsetY < -8.0f || offsetY > 8.0f) {
+                AnimatorSet set = this.mMapHandle.getAnimatorSet();
+                set.play(this.mMapHandle.getTranslateAnimAtor(offsetX, offsetY)).with(this.mMapHandle.getScaleAnimator(getCurrentScale(), getCurrentScale() * 1.6f, mid));
+                set.start();
+                return;
+            }
+            postMatrixTranslate(offsetX, offsetY);
+            postImageMatrix();
+            this.mMapHandle.toScaleAnimator(getCurrentScale(), getCurrentScale() * 1.6f, mid);
+        }
+    }
+
+    public void zoomScale() {
+        if (!this.mMapHandle.isAniming() && this.mImageViewHelper.haveZoomScale) {
+            this.mMapHandle.toScaleAnimator(getCurrentScale(), getCurrentScale() * 0.625f, this.mImageViewHelper.getCenterPoint(this.imageUsingMatrix));
+        }
+    }
+
+    private void rotateToZero() {
+        if (!this.mMapHandle.isAniming()) {
+            PointF center = this.mImageViewHelper.getCenterPoint(this.imageUsingMatrix);
+            float offsetX = (((float) this.mView_width) / 2.0f) - center.x;
+            float offsetY = (((float) this.mView_height) / 2.0f) - center.y;
+            AnimatorSet animatorSet = this.mMapHandle.getAnimatorSet();
+            animatorSet.play(this.mMapHandle.getTranslateAnimAtor(offsetX, offsetY)).with(this.mMapHandle.getScaleAnimator(getScale(), this.mBaZhanUtil.initScale, center)).with(this.mMapHandle.getRotateAnimator(this.saveRotate, Float.valueOf(this.mBaZhanUtil.initAngle), center));
+            animatorSet.start();
+        }
+    }
+
+    public void releaseImageShow() {
+        rotateToZero();
+    }
+
+    public void translateOffset(float offsetX, float offsetY) {
+        this.mMapHandle.toTranslateAnimAtor(offsetX, offsetY);
+    }
+
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        getViewTreeObserver().addOnGlobalLayoutListener(this);
+    }
+
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        getViewTreeObserver().removeOnGlobalLayoutListener(this);
+    }
+
+    public void onGlobalLayout() {
+        this.mView_width = getWidth();
+        this.mView_height = getHeight();
+        this.mImageViewHelper.setViewSize(this.mView_width, this.mView_height);
+        Drawable d = getDrawable();
+        if (d != null && this.isNewImageSVG) {
+            this.isNewImageSVG = false;
+            this.saveRotate = 0.0f;
+            if (this.mOnRotateListener != null) {
+                this.mOnRotateListener.onRotate(this.saveRotate);
+            }
+            int dw = d.getIntrinsicWidth();
+            this.mImageViewHelper.setDrawableSize(dw, d.getIntrinsicHeight());
+            this.mImageViewHelper.initImageMatrix(this.imageUsingMatrix);
+            this.mBaZhanUtil = new BaZhanUtil(0.0f, (((float) this.mView_height) * 1.0f) / ((float) dw));
+            PointF mid = new PointF(((float) this.mView_width) / 2.0f, ((float) this.mView_height) / 2.0f);
+            postMatrixScale(this.mBaZhanUtil.initScale / getScale(), mid);
+            postMatrixRotate(this.mBaZhanUtil.initAngle, mid);
+            this.saveRotate -= this.mBaZhanUtil.initAngle;
+            this.mImageViewHelper.haveZoomScale = true;
+            if (this.mImageViewHelper.mOnMinZoomCallback != null) {
+                this.mImageViewHelper.mOnMinZoomCallback.onMinZoom(true);
+            }
+            postImageMatrix();
+        }
+    }
+
+    public boolean isAllowTranslate() {
+        return this.isAllowTranslate;
+    }
+
+    public void setAllowTranslate(boolean isAllowTranslate) {
+        this.isAllowTranslate = isAllowTranslate;
+    }
+
+    public boolean isAllowRotate() {
+        return this.isAllowRotate;
+    }
+
+    public void setAllowRotate(boolean isAllowRotate) {
+        this.isAllowRotate = isAllowRotate;
+        if (!isAllowRotate && this.saveRotate != 0.0f) {
+            rotateToZero();
+        }
+    }
+
+    public float getScale() {
+        return this.mImageViewHelper.getCurrentScale(this.imageUsingMatrix);
+    }
+
+    public ImageViewHelper getHelper() {
+        return this.mImageViewHelper;
+    }
+
+    public boolean onViewClick(float xOnView, float yOnView) {
+        return false;
+    }
+
+    protected Shape onViewLongClickShape(float xOnView, float yOnView) {
+        return null;
+    }
+
+    protected boolean onViewLongClickShapeMove(float xOnView, float yOnView) {
+        return false;
+    }
+
+    public float getLastOffsetX() {
+        return this.lastOffsetX;
+    }
+
+    public void setLastOffsetX(float lastOffsetX) {
         this.lastOffsetX = lastOffsetX;
     }
 
-    public float getLastOffsetY()
-    {
-        return lastOffsetY;
+    public float getLastOffsetY() {
+        return this.lastOffsetY;
     }
 
-    public void setLastOffsetY(float lastOffsetY)
-    {
+    public void setLastOffsetY(float lastOffsetY) {
         this.lastOffsetY = lastOffsetY;
     }
 
-    private float lastOffsetY;
-	private float dragVelocity;
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        if (this.curGestureMode == GestureMode.toMove) {
+            inertiaMove();
+        }
+    }
 
-	@Override
-	protected void onDraw(Canvas canvas) {
-		super.onDraw(canvas);
-		if (curGestureMode == GestureMode.toMove) {
-			inertiaMove();
-		}
-	}
+    public PointF getCenterByImage() {
+        return this.mImageViewHelper.getSinglePoint(this.imageUsingMatrix, this.saveRotate, new PointF(((float) this.mView_width) / 2.0f, ((float) this.mView_height) / 2.0f));
+    }
 
-	/**
-	 * 获屏幕中心点相对于图片的对应点
-	 * 
-	 * @return
-	 */
-	public PointF getCenterByImage() {
-		return mImageViewHelper.getSinglePoint(imageUsingMatrix, saveRotate,
-				new PointF(mView_width / 2f, mView_height / 2f));
-	}
+    protected void inertiaMove() {
+        float deltaX = this.lastOffsetX * this.dragVelocity;
+        float deltaY = this.lastOffsetY * this.dragVelocity;
+        this.dragVelocity *= 0.0f;
+        if (((double) Math.abs(deltaX)) >= 0.01d || ((double) Math.abs(deltaY)) >= 0.01d) {
+            postMatrixTranslate(deltaX, deltaY);
+            postImageMatrix();
+            return;
+        }
+        this.curGestureMode = GestureMode.none;
+    }
 
-	/**
-	 * 惯性滑动
-	 * 
-	 */
-	protected void inertiaMove() {
-		final float deltaX = lastOffsetX * dragVelocity;
-		final float deltaY = lastOffsetY * dragVelocity;
+    public void setImageDrawable(Drawable drawable) {
+        if (getDrawable() != drawable) {
+            this.imageUsingMatrix.reset();
+            this.isNewImageSVG = true;
+            super.setImageDrawable(drawable);
+        }
+    }
 
-		Log.e(" inertiaMove ", deltaX + "," + deltaY);
+    public void setImageBitmap(Bitmap bm) {
+        setImageDrawable(new MyBitmapDrawable(getResources(), bm));
+    }
 
-		dragVelocity *= FRICTION;
-		if (Math.abs(deltaX) < 0.01 && Math.abs(deltaY) < 0.01) {
-			curGestureMode = GestureMode.none;
-			return;
-		}
-		postMatrixTranslate(deltaX, deltaY);
-		postImageMatrix();
-	}
+    private double distanceBetween(PointF left, PointF right) {
+        return Math.sqrt(Math.pow((double) (left.x - right.x), 2.0d) + Math.pow((double) (left.y - right.y), 2.0d));
+    }
 
-	@Override
-	public void setImageDrawable(Drawable drawable) {
-		if (getDrawable() == drawable)
-			return;
-		imageUsingMatrix.reset();
-		isNewImageSVG = true;
-		super.setImageDrawable(drawable);
-	}
+    private void midPoint(PointF point, MotionEvent event) {
+        point.set((event.getX(0) + event.getX(1)) / 2.0f, (event.getY(0) + event.getY(1)) / 2.0f);
+    }
 
-	@Override
-	public void setImageBitmap(Bitmap bm) {
-		this.setImageDrawable(new MyBitmapDrawable(getResources(), bm));
-	}
+    private float getCurrentScale() {
+        this.imageUsingMatrix.getValues(this.matrixValues);
+        return this.matrixValues[0];
+    }
 
-	private double distanceBetween(PointF left, PointF right) {
-		return Math.sqrt(Math.pow(left.x - right.x, 2)
-				+ Math.pow(left.y - right.y, 2));
-	}
+    public void postMatrixRotate(float rotate, PointF midPoint) {
+        this.saveRotate -= rotate;
+        if (this.saveRotate > 360.0f || this.saveRotate < -360.0f) {
+            this.saveRotate %= 360.0f;
+        }
+        Log.e(" saveRotate ", new StringBuilder(String.valueOf(this.saveRotate)).toString());
+        if (this.mOnRotateListener != null) {
+            this.mOnRotateListener.onRotate(this.saveRotate);
+        }
+        Log.e("rotate", new StringBuilder(String.valueOf(rotate)).append("_").append(midPoint.toString()).toString());
+        this.imageUsingMatrix.postRotate(rotate, midPoint.x, midPoint.y);
+    }
 
-	private void midPoint(PointF point, MotionEvent event) {
-		float x = event.getX(0) + event.getX(1);
-		float y = event.getY(0) + event.getY(1);
-		point.set(x / 2, y / 2);
-	}
+    public void postMatrixScale(float scale, PointF midpPoint) {
+        if (scale < 1.0f && !this.mImageViewHelper.haveZoomScale) {
+            return;
+        }
+        if (scale <= 1.0f || this.mImageViewHelper.havePullScale) {
+            Log.e("scale", new StringBuilder(String.valueOf(scale)).append("_").append(midpPoint.toString()).toString());
+            this.imageUsingMatrix.postScale(scale, scale, midpPoint.x, midpPoint.y);
+        }
+    }
 
-	private class ScaleListener extends
-			ScaleGestureDetector.SimpleOnScaleGestureListener {
-		@Override
-		public boolean onScale(ScaleGestureDetector detector) {
-			if(canChange) {
-				float scaleFactor = detector.getScaleFactor();
-				postMatrixScale(scaleFactor, mid);
-			}
-			return true;
-		}
-	}
+    public final void postImageMatrix() {
+        checkScale();
+        checkTranslate();
+        setImageMatrix(this.imageUsingMatrix);
+    }
 
-	private float saveRotate = 0;
-	public OnSingleClickListener mSingleClickListener;
-	private OnRotateListener mOnRotateListener;
-	private OnLongClickListener1 mOnLongClickListener;
+    public void postMatrixTranslate(float deltaX, float deltaY) {
+        if (deltaX != 0.0f || deltaY != 0.0f) {
+            this.imageUsingMatrix.postTranslate(deltaX, deltaY);
+        }
+    }
 
-	private OnCenterPointListener mOnCenterPointListener;
-	/**
-	 * 旋转事件
-	 * 
-	 * @author libo
-	 */
-	private class MyRotateGesture extends SimpleOnRotateGestureListener {
+    public void checkScale() {
+        this.mImageViewHelper.checkScale(this.imageUsingMatrix, this.mid);
+    }
 
-		@Override
-		public boolean onRotate(RotateGestureDetector detector) {
-			float toRotate = detector.getRotationDegreesDelta();
-			if (toRotate > 360 || toRotate < -360) {
-				toRotate %= 360;
-			}
-			if (toRotate == 0) {
-				return false;
-			}
-			// float rotate = -toRotate;
-			// saveRotate -= rotate;
-			// if (saveRotate > 360 || saveRotate < -360) {
-			// saveRotate %= 360;
-			// }
-			// if (mOnRotateListener != null) {
-			// mOnRotateListener.onRotate(saveRotate);
-			// }
-			if(canChange) {
-				postMatrixRotate(-toRotate, new PointF(mid.x, mid.y));
-			}
-			return true;
-		}
+    public void checkTranslate() {
+        this.mImageViewHelper.checkTranslate(this.imageUsingMatrix);
+    }
 
-	}
+    public void setOnSingleClickListener(OnSingleClickListener listener) {
+        this.mSingleClickListener = listener;
+    }
 
-	private static class MyBitmapDrawable extends BitmapDrawable {
-		public MyBitmapDrawable(Resources res, Bitmap bitmap) {
-			super(res, bitmap);
-		}
-	};
+    public void setOnRotateListener(OnRotateListener listener) {
+        this.mOnRotateListener = listener;
+    }
 
-	private enum GestureMode {
-		toMove, doubleTap, drag, rotate_scale, none,
-	}
+    public void setOnMyTouchListener(MyOnTouchListener listener) {
+        this.myOnTouchListener = listener;
+    }
 
-	private class MyGestureDetectorListener extends
-			GestureDetector.SimpleOnGestureListener {
+    public void setOnLongClickListener(OnLongClickListener1 listener) {
+        this.mOnLongClickListener = listener;
+    }
 
-		@Override
-		public boolean onDoubleTap(MotionEvent e) {
-			if (mImageViewHelper.havePullScale) {
-				float centerX = e.getX();
-				float centerY = e.getY();
-
-				if (mImageViewHelper.pointInArea(imageUsingMatrix, saveRotate,
-						new PointF(centerX, centerY))) {
-					mid.set(centerX, centerY);
-					pullScale(mid);
-				}
-			}
-			return true;
-		}
-
-		
-		@Override
-		public boolean onSingleTapUp(MotionEvent e) {
-			PointF cur = new PointF(e.getX(), e.getY());
-			if (mImageViewHelper.pointInArea(imageUsingMatrix, saveRotate, cur)) {
-				PointF point = mImageViewHelper.getSinglePoint(
-						imageUsingMatrix, saveRotate, cur);
-				if (mSingleClickListener != null) {
-					mSingleClickListener.onSingle(point);
-				}
-				onViewClick(point.x, point.y);
-			}
-			return true;
-		}
-
-		@Override
-		public void onLongPress(MotionEvent e) {
-			PointF cur = new PointF(e.getX(), e.getY());
-			if (mImageViewHelper.pointInArea(imageUsingMatrix, saveRotate, cur)) {
-				PointF point = mImageViewHelper.getSinglePoint(
-						imageUsingMatrix, saveRotate, cur);
-				if (mOnLongClickListener != null) {
-					mOnLongClickListener.onLongClick(point);
-				}
-			}
-//			if (isAllowTranslate) {
-//				float offsetX = mView_width / 2f - cur.x;
-//				float offsetY = mView_height / 2f - cur.y;
-//				translateOffset(offsetX, offsetY);
-//			}
-		}
-	}
-
-	/**
-	 * 獲取矩阵當前縮放值
-	 * 
-	 * @return
-	 */
-	private float getCurrentScale() {
-		imageUsingMatrix.getValues(matrixValues);
-		return matrixValues[Matrix.MSCALE_X];
-	}
-
-	/**
-	 * 设置旋转
-	 * 
-	 * @param rotate
-	 * @param pointF
-	 */
-	@Override
-	public void postMatrixRotate(float rotate, PointF midPoint) {
-		saveRotate -= rotate;
-		if (saveRotate > 360 || saveRotate < -360) {
-			saveRotate %= 360;
-		}
-
-		Log.e(" saveRotate ", saveRotate + "");
-
-		if (mOnRotateListener != null) {
-			mOnRotateListener.onRotate(saveRotate);
-		}
-		Log.e("rotate",rotate+"_"+midPoint.toString());
-		imageUsingMatrix.postRotate(rotate, midPoint.x, midPoint.y);
-	}
-
-	/**
-	 * 提交伸缩
-	 * 
-	 * @param scale
-	 * @param centerX
-	 * @param centerY
-	 */
-	@Override
-	public void postMatrixScale(float scale, PointF midpPoint) {
-		if (scale < 1 && !mImageViewHelper.haveZoomScale) {
-			return;
-		}
-		if (scale > 1 && !mImageViewHelper.havePullScale) {
-			return;
-		}
-		Log.e("scale",scale+"_"+midpPoint.toString());
-		imageUsingMatrix.postScale(scale, scale, midpPoint.x, midpPoint.y);
-	}
-
-	/**
-	 * 刷新矩阵显示
-	 * 
-	 */
-	@Override
-	public final void postImageMatrix() {
-		checkScale();
-		checkTranslate();
-		setImageMatrix(imageUsingMatrix);
-	}
-
-	/**
-	 * 提交平移变换
-	 * 
-	 * @param deltaX
-	 *            平移距离X
-	 * @param deltaY
-	 *            平移距离Y
-	 */
-	@Override
-	public void postMatrixTranslate(float deltaX, float deltaY) {
-		if (deltaX == 0 && deltaY == 0) {
-			return;
-		}
-		imageUsingMatrix.postTranslate(deltaX, deltaY);
-	}
-
-	@Override
-	public void checkScale() {
-		mImageViewHelper.checkScale(imageUsingMatrix, mid);
-	}
-
-	@Override
-	public void checkTranslate() {
-		mImageViewHelper.checkTranslate(imageUsingMatrix);
-	}
-
-	/**
-	 * 设置单击返回点击点
-	 * 
-	 * @param listener
-	 */
-	public void setOnSingleClickListener(OnSingleClickListener listener) {
-		this.mSingleClickListener = listener;
-	}
-
-	/**
-	 * 设置旋转角度回调
-	 * 
-	 * @param listener
-	 */
-	public void setOnRotateListener(OnRotateListener listener) {
-		this.mOnRotateListener = listener;
-	}
-
-	public  void setCenterPointListener(OnCenterPointListener centerPointListener){
-		this.mOnCenterPointListener=centerPointListener;
-	}
-	public void setOnLongClickListener(OnLongClickListener1 listener) {
-		this.mOnLongClickListener = listener;
-	}
-
-	public interface OnLongClickListener1 {
-		void onLongClick(PointF point);
-	}
-
-	public interface OnSingleClickListener {
-		void onSingle(PointF p);
-	}
-
-	public interface OnRotateListener {
-		void onRotate(float rotate);
-	}
-
-	public interface OnCenterPointListener {
-		void onCenter(PointF pointF);
-	}
+    public void setOnTouchListener(MyOnTouchListener listener) {
+        this.myOnTouchListener = listener;
+    }
 }

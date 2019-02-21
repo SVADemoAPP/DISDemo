@@ -12,11 +12,16 @@ import com.gyr.disvisibledemo.adapter.RvMemberAdapter;
 import com.gyr.disvisibledemo.bean.FloorModel;
 import com.gyr.disvisibledemo.bean.SiteModel;
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
+import com.gyr.disvisibledemo.framework.sharef.SharedPrefHelper;
+import com.gyr.disvisibledemo.util.Constant;
+import com.gyr.disvisibledemo.util.FileUtil;
 
 import org.xutils.view.annotation.Event;
 import org.xutils.view.annotation.ViewInject;
 import org.xutils.x;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +41,28 @@ public class HomeActivity extends BaseActivity {
         x.view().inject(this);
     }
 
+    private void initFloorMapsDir(){
+        File dir = new File(Constant.sdPath + "/maps/");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        if(SharedPrefHelper.getBoolean(this,"isFirst",true)) {
+            SharedPrefHelper.putBoolean(this,"isFirst",false);
+            for(int i=0;i<5;i++){
+                File mapFile = new File(Constant.sdPath + "/maps/floor_"+i+".png");
+                if (!mapFile.exists()) {
+                    try {
+                        mapFile.createNewFile();
+                        FileUtil.writeBytesToFile(this.getAssets().open("floor_"+i+".png"), mapFile);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        }
+    }
+
     private void initSiteAndFloor(){
         for(int i=0;i<10;i++){
             SiteModel siteModel=new SiteModel();
@@ -50,8 +77,11 @@ public class HomeActivity extends BaseActivity {
         }
     }
 
+
+
     @Override
     public void dealLogicBeforeInitView() {
+        initFloorMapsDir();
         initSiteAndFloor();
     }
 
@@ -73,9 +103,9 @@ public class HomeActivity extends BaseActivity {
         @Override
         public void memberClick(String floorMap, int type) {
             showToast(floorMap);
-//            Bundle bundle=new Bundle();
-//            bundle.putString("map",floorMap);
-//            openActivity(HomeActivity.class,bundle);
+            Bundle bundle=new Bundle();
+            bundle.putString("floormap",floorMap);
+            openActivity(FloorMapActivity.class,bundle);
 //
 //            String ss= (String) HomeActivity.this.getIntent().getExtras().get("map");
         }

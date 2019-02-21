@@ -1,396 +1,271 @@
 package net.yoojia.imagemap;
 
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.PointF;
+import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.os.Message;
+import android.support.v4.internal.view.SupportMenu;
+import android.util.AttributeSet;
+import com.caverock.androidsvg.SVG;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import com.caverock.androidsvg.SVG;
-
 import net.yoojia.imagemap.core.CollectPointShape;
+import net.yoojia.imagemap.core.LineShape;
 import net.yoojia.imagemap.core.MoniPointShape;
 import net.yoojia.imagemap.core.PushMessageShape;
-import net.yoojia.imagemap.core.RequestShape;
 import net.yoojia.imagemap.core.Shape;
 import net.yoojia.imagemap.core.ShapeExtension;
+import net.yoojia.imagemap.core.ShapeExtension.OnShapeActionListener;
 import net.yoojia.imagemap.core.SpecialShape;
+import net.yoojia.imagemap.core.pRRUInfoShape;
+import net.yoojia.imagemap.core.pRRUInfoShape.pRRUType;
 import net.yoojia.imagemap.util.MatrixConverHelper;
 import net.yoojia.imagemap.util.SvgHelper;
 import net.yoojia.imagemap.util.SvgHelper.SvgPath;
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.Paint.Style;
-import android.graphics.PointF;
-import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
-import android.os.Handler;
-import android.util.AttributeSet;
-import android.webkit.MimeTypeMap;
 
-/**
- * HighlightImageView基于TouchImageView的功能，在ImageView的Canvas上绘制一些形状。 Based on
- * TouchImageView class, Design for draw shapes on canvas of ImageView
- */
-public class HighlightImageView1 extends TouchImageView1 implements
-        ShapeExtension
-{
-
+public class HighlightImageView1 extends TouchImageView1 implements ShapeExtension {
+    private static final int SVGTOPATH_OK = 1;
+    private Context context;
+    public boolean isAllowRequestTranslate;
+    public boolean isFiter;
     public boolean isOnArea;
+    private LineShape lineShape;
+    private Shape longClickShape;
     public int mFiterColor;
+    private SVG mSvgData;
+    private List<SvgPath> mSvgPaths;
+    private Handler mhandler;
+    private OnShapeActionListener onShapeClickListener;
+    private pRRUInfoShape pInfoShapeNew;
+    private Map<Object, Shape> shapesCache;
 
-    public int getmFiterColor()
-    {
-        return mFiterColor;
+    public int getmFiterColor() {
+        return this.mFiterColor;
     }
 
-    public void setmFiterColor(int mFiterColor)
-    {
+    public void setmFiterColor(int mFiterColor) {
         this.mFiterColor = mFiterColor;
     }
 
-    public boolean isOnArea()
-    {
-        return isOnArea;
+    public boolean isOnArea() {
+        return this.isOnArea;
     }
 
-    public void setOnArea(boolean isOnArea)
-    {
+    public void setOnArea(boolean isOnArea) {
         this.isOnArea = isOnArea;
     }
 
-    public HighlightImageView1(Context context)
-    {
+    public HighlightImageView1(Context context) {
         this(context, null);
-
+        this.context = context;
     }
 
-    public HighlightImageView1(Context context, AttributeSet attrs)
-    {
+    public HighlightImageView1(Context context, AttributeSet attrs) {
         super(context, attrs);
+        this.shapesCache = new HashMap(0);
+        this.mSvgPaths = new ArrayList();
+        this.mhandler = new Handler() {
+            public void handleMessage(Message msg) {
+                if (msg.what == 1) {
+                    HighlightImageView1.this.bindPathToShape(HighlightImageView1.this.getShapes(), HighlightImageView1.this.mSvgPaths);
+                }
+            }
+        };
+        this.isFiter = false;
+        this.isAllowRequestTranslate = false;
     }
 
-    private Map<Object, Shape> shapesCache = new HashMap<Object, Shape>(0);
-    private OnShapeActionListener onShapeClickListener;
-    private SVG mSvgData;
-    private List<SvgPath> mSvgPaths = new ArrayList<SvgPath>();
-    private static final int SVGTOPATH_OK = 1;
-    private Handler mhandler = new Handler()
-    {
-        public void handleMessage(android.os.Message msg)
-        {
-            if (msg.what == SVGTOPATH_OK)
-            {
-                bindPathToShape(getShapes(), mSvgPaths);
-            }
-        }
-    };
-
-    private void bindPathToShape(final List<Shape> shapes,
-            final List<SvgPath> svgPaths)
-    {
-        if (svgPaths.size() == 0 || shapes.size() == 0)
-        {
-            return;
-        }
-        new Thread(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                shape: for (int i = 0; i < shapes.size(); i++)
-                {
-                    int z = shapes.size();
-                    Shape shape = shapes.get(i);
-                    if (!(shape instanceof SpecialShape))
-                    {
-                        continue shape;
-                    }
-                    SpecialShape ss = (SpecialShape) shape;
-                    if (ss.getSvgPath() != null)
-                    {
-                        continue shape;
-                    }
-                    for (int j = 0; j < svgPaths.size(); j++)
-                    {
-                        SvgPath p = svgPaths.get(j);
-                        if (p.isArea(ss.getCenterX(), ss.getCenterY()))
-                        {
-                            ss.setSvgPath(p);
-                            continue shape;
+    private void bindPathToShape(final List<Shape> shapes, final List<SvgPath> svgPaths) {
+        if (svgPaths.size() != 0 && shapes.size() != 0) {
+            new Thread(new Runnable() {
+                public void run() {
+                    for (int i = 0; i < shapes.size(); i++) {
+                        int z = shapes.size();
+                        Shape shape = (Shape) shapes.get(i);
+                        if (shape instanceof SpecialShape) {
+                            SpecialShape ss = (SpecialShape) shape;
+                            if (ss.getSvgPath() == null) {
+                                for (int j = 0; j < svgPaths.size(); j++) {
+                                    SvgPath p = (SvgPath) svgPaths.get(j);
+                                    if (p.isArea(ss.getCenterX(), ss.getCenterY())) {
+                                        ss.setSvgPath(p);
+                                        break;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
-            }
-        }).start();
-    };
+            }).start();
+        }
+    }
 
-    private void bindPathToShape(SpecialShape shape,
-            final List<SvgPath> svgPaths)
-    {
-        for (int j = 0; j < svgPaths.size(); j++)
-        {
-            SvgPath p = svgPaths.get(j);
-            // if (MatrixConverHelper.isArea(p.getPath(),
-            // (int) shape.getCenterX(), (int) shape.getCenterY())
-            // && p.getPaint().getColor() != Color.parseColor("#F8F8D6"))
-            // {
-            // p.setSelect(true);
-            // shape.setAreaPath(p.getPath());
-            // break;
-            // }
-            if (p.isArea(shape.getCenterX(), shape.getCenterY()))
-            {
+    private void bindPathToShape(SpecialShape shape, List<SvgPath> svgPaths) {
+        for (int j = 0; j < svgPaths.size(); j++) {
+            SvgPath p = (SvgPath) svgPaths.get(j);
+            if (p.isArea(shape.getCenterX(), shape.getCenterY())) {
                 shape.setSvgPath(p);
-                break;
+                return;
             }
         }
     }
 
-    public boolean isFiter = false;
-    public boolean isAllowRequestTranslate = false;
-
-    public boolean isAllowRequestTranslate()
-    {
-        return isAllowRequestTranslate;
+    public boolean isAllowRequestTranslate() {
+        return this.isAllowRequestTranslate;
     }
 
-    public void setAllowRequestTranslate(boolean isAllowRequestTranslate)
-    {
+    public void setAllowRequestTranslate(boolean isAllowRequestTranslate) {
         this.isAllowRequestTranslate = isAllowRequestTranslate;
     }
 
-    public void setSvg(final SVG svg)
-    {
-        if (svg == null)
-        {
-            return;
+    public void setSvg(final SVG svg) {
+        if (svg != null) {
+            clearShapes();
+            this.mSvgData = svg;
+            new Thread(new Runnable() {
+                public void run() {
+                    SvgHelper svgHelper = new SvgHelper(new Paint());
+                    svgHelper.load(HighlightImageView1.this.mSvgData);
+                    HighlightImageView1.this.mSvgPaths = svgHelper.getPathsForViewport((int) svg.getDocumentWidth(), (int) svg.getDocumentHeight());
+                    HighlightImageView1.this.mhandler.sendEmptyMessage(1);
+                }
+            }).start();
         }
-        clearShapes();
-        mSvgData = svg;
-        new Thread(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                SvgHelper svgHelper = new SvgHelper(new Paint());
-                svgHelper.load(mSvgData);
-                mSvgPaths = svgHelper.getPathsForViewport(
-                        (int) svg.getDocumentWidth(),
-                        (int) svg.getDocumentHeight());
-                mhandler.sendEmptyMessage(SVGTOPATH_OK);
-            }
-        }).start();
     }
 
-    public void setOnShapeClickListener(
-            OnShapeActionListener onShapeClickListener)
-    {
+    public void setOnShapeClickListener(OnShapeActionListener onShapeClickListener) {
         this.onShapeClickListener = onShapeClickListener;
     }
 
-    @Override
-    public void addShape(Shape shape, boolean isMove)
-    {
-        shapesCache.put(shape.tag, shape);
-        if (shape instanceof SpecialShape)
-        {
-            bindPathToShape((SpecialShape) shape, mSvgPaths);
+    public void addShape(Shape shape, boolean isMove) {
+        this.shapesCache.put(shape.tag, shape);
+        if (shape instanceof SpecialShape) {
+            bindPathToShape((SpecialShape) shape, this.mSvgPaths);
         }
-
-        if (isMove)
-        {
-            PointF point = new PointF(shape.getCenterX(), shape.getCenterY());
-            requestTranslate(point);
-//            return;
+        if (isMove) {
+            requestTranslate(new PointF(shape.getCenterX(), shape.getCenterY()));
         }
-
         postInvalidate();
     }
 
-    @Override
-    public void removeShape(Object tag)
-    {
-        if (shapesCache.containsKey(tag))
-        {
-            shapesCache.remove(tag);
+    public void removeShape(Object tag) {
+        if (this.shapesCache.containsKey(tag)) {
+            this.shapesCache.remove(tag);
             postInvalidate();
         }
     }
 
-    /**
-     * 判断shape是否存在
-     * 
-     * @param tag
-     * @return
-     */
-    public boolean getShape(Object tag)
-    {
-        if (shapesCache.containsKey(tag))
-        {
-            return true;
-        } else
-        {
-            return false;
+    public Shape getShape(Object tag) {
+        if (this.shapesCache.containsKey(tag)) {
+            return (Shape) this.shapesCache.get(tag);
         }
+        return null;
     }
 
-    @Override
-    public void clearShapes()
-    {
-        shapesCache.clear();
-        mSvgPaths.clear();
+    public void clearShapes() {
+        this.shapesCache.clear();
+        this.mSvgPaths.clear();
+        postInvalidate();
     }
 
-    public List<Shape> getShapes()
-    {
-        return new ArrayList<Shape>(shapesCache.values());
+    public List<Shape> getShapes() {
+        return new ArrayList(this.shapesCache.values());
     }
 
-    @Override
-    protected void onDraw(Canvas canvas)
-    {
+    protected void onDraw(Canvas canvas) {
         Matrix matrix = new Matrix(getImageMatrix());
         super.onDraw(canvas);
         float scale = getScale();
-        for (Shape shape : shapesCache.values())
-        {
+        for (Shape shape : this.shapesCache.values()) {
             shape.postMatrixCahnge(matrix);
             shape.setScale(scale);
             shape.onDraw(canvas);
         }
-//        Paint paint = new Paint();
-//        paint.setAntiAlias(true);
-//        paint.setStyle(Style.STROKE);
-//        paint.setStrokeWidth(6);
-//        paint.setColor(Color.parseColor("#8812ee"));
-//        for (int i = 0; i < mSvgPaths.size(); i++)
-//        {
-//            SvgPath mSvgPath = mSvgPaths.get(i);
-//            if (mSvgPath != null)
-//            {
-//                if (mSvgPath.isSelect())
-//                {
-//                    paint.setColor(Color.parseColor("#88ff44"));
-//                } else
-//                {
-//                    paint.setColor(Color.parseColor("#8812ee"));
-//                }
-//                canvas.save();
-//                canvas.setMatrix(matrix);
-//                switch (mSvgPath.getType())
-//                {
-//                case path:
-//                    canvas.drawPath(mSvgPath.getPath(), paint);
-//                    break;
-//                case rect:
-//                    canvas.drawRect(mSvgPath.getRect(), paint);
-//                    break;
-//                }
-//                canvas.restore();
-//            }
-//
-//        }
-
+        postInvalidate();
         onDrawWithCanvas(canvas);
     }
 
-    public void requestTranslate(PointF point)
-    {
-        if (!mMapHandle.isAniming())
-        {
-            point = MatrixConverHelper.mapMatrixPoint(getImageMatrix(),
-                    point.x, point.y);
-            float dx = mView_width / 2f - point.x;
-            float dy = mView_height / 2f - point.y;
-
-            if (Math.abs(dx) < 4 && Math.abs(dy) < 4)
-            {
-                return;
+    private void requestTranslate(PointF point) {
+        if (!this.mMapHandle.isAniming()) {
+            point = MatrixConverHelper.mapMatrixPoint(getImageMatrix(), point.x, point.y);
+            float dx = (((float) this.mView_width) / 2.0f) - point.x;
+            float dy = (((float) this.mView_height) / 2.0f) - point.y;
+            if (Math.abs(dx) >= 4.0f || Math.abs(dy) >= 4.0f) {
+                translateOffset(dx, dy);
             }
-
-            translateOffset(dx, dy);
         }
     }
 
-    @Override
-    public void setImageDrawable(Drawable drawable)
-    {
+    public void setImageDrawable(Drawable drawable) {
         super.setImageDrawable(drawable);
     }
 
-    /**
-     * 如果继承HighlightImageView，并需要在Canvas上绘制，可以Override这个方法来实现。 - Override this
-     * method for draw something on canvas when YourClass extends
-     * HighlightImageView.
-     * 
-     * @param canvas
-     *            画布
-     */
-    protected void onDrawWithCanvas(Canvas canvas)
-    {
+    protected void onDrawWithCanvas(Canvas canvas) {
     }
 
-    @Override
-    protected boolean onViewClick(float xOnView, float yOnView)
-    {
-        for (Shape shape : shapesCache.values())
-        {
-            if (shape.inArea(xOnView, yOnView))
-            {
-                if (shape instanceof SpecialShape)
-                {
-                    if (onShapeClickListener != null)
-                    {
-                        onShapeClickListener.onSpecialShapeClick(
-                                (SpecialShape) shape, shape.getCenterX(),
-                                shape.getCenterY());
+    protected Shape onViewLongClickShape(float xOnView, float yOnView) {
+        this.longClickShape = null;
+        for (Shape shape : this.shapesCache.values()) {
+            if (shape.inArea(xOnView, yOnView) && (shape instanceof pRRUInfoShape)) {
+                this.longClickShape = shape;
+                break;
+            }
+        }
+        return this.longClickShape;
+    }
+
+    protected boolean onViewLongClickShapeMove(float xOnView, float yOnView) {
+        if (!(this.longClickShape == null || this.pInfoShapeNew == null)) {
+            this.pInfoShapeNew.setValues(xOnView, yOnView);
+            this.lineShape.setValues(this.pInfoShapeNew.getCenterX(), this.pInfoShapeNew.getCenterY(), this.longClickShape.getCenterX(), this.longClickShape.getCenterY(), 1.0f);
+        }
+        return true;
+    }
+
+    public void autoShowView(Shape shape) {
+        if (this.onShapeClickListener != null) {
+            this.onShapeClickListener.onPrruInfoShapeClick((pRRUInfoShape) shape, shape.getCenterX(), shape.getCenterY());
+        }
+    }
+
+    public boolean onViewClick(float xOnView, float yOnView) {
+        for (Shape shape : this.shapesCache.values()) {
+            if (shape.inArea(xOnView, yOnView)) {
+                if (shape instanceof SpecialShape) {
+                    if (this.onShapeClickListener != null) {
+                        this.onShapeClickListener.onSpecialShapeClick((SpecialShape) shape, shape.getCenterX(), shape.getCenterY());
                     }
-                } else if (shape instanceof PushMessageShape)
-                {
-                    if (onShapeClickListener != null)
-                    {
-                        onShapeClickListener.onPushMessageShapeClick(
-                                (PushMessageShape) shape, shape.getCenterX(),
-                                shape.getCenterY());
+                } else if (shape instanceof PushMessageShape) {
+                    if (this.onShapeClickListener != null) {
+                        this.onShapeClickListener.onPushMessageShapeClick((PushMessageShape) shape, shape.getCenterX(), shape.getCenterY());
                     }
+                } else if (shape instanceof CollectPointShape) {
+                    if (this.onShapeClickListener != null) {
+                        this.onShapeClickListener.onCollectShapeClick((CollectPointShape) shape, shape.getCenterX(), shape.getCenterY());
+                    }
+                } else if (shape instanceof MoniPointShape) {
+                    if (this.onShapeClickListener != null) {
+                        this.onShapeClickListener.onMoniShapeClick((MoniPointShape) shape, shape.getCenterX(), shape.getCenterY());
+                    }
+                } else if ((shape instanceof pRRUInfoShape) && this.onShapeClickListener != null) {
+                    this.onShapeClickListener.onPrruInfoShapeClick((pRRUInfoShape) shape, shape.getCenterX(), shape.getCenterY());
                 }
-                else if(shape instanceof CollectPointShape){
-                	if (onShapeClickListener != null)
-                    {
-                        onShapeClickListener.onCollectShapeClick(
-                                (CollectPointShape) shape, shape.getCenterX(),
-                                shape.getCenterY());
-                    }
-                }
-                else if(shape instanceof MoniPointShape){
-                	if (onShapeClickListener != null)
-                    {
-                        onShapeClickListener.onMoniShapeClick(
-                                (MoniPointShape) shape, shape.getCenterX(),
-                                shape.getCenterY());
-                    }
-                }
-                PointF point = new PointF(shape.getCenterX(),
-                        shape.getCenterY());
-                point = MatrixConverHelper.mapMatrixPoint(getImageMatrix(),
-                        point.x, point.y);
-                if (isAllowTranslate)
-                {
-                    float offsetX = mView_width / 2f - point.x;
-                    float offsetY = mView_height / 2f - point.y;
-                    translateOffset(offsetX, offsetY);
+                PointF point = new PointF(shape.getCenterX(), shape.getCenterY());
+                point = MatrixConverHelper.mapMatrixPoint(getImageMatrix(), point.x, point.y);
+                if (this.isAllowTranslate) {
+                    translateOffset((((float) this.mView_width) / 2.0f) - point.x, (((float) this.mView_height) / 2.0f) - point.y);
                 }
                 return true;
             }
         }
-        if (onShapeClickListener != null)
-        {
-            onShapeClickListener.outShapeClick(xOnView, yOnView);
+        if (this.onShapeClickListener != null) {
+            this.onShapeClickListener.outShapeClick(xOnView, yOnView);
         }
         return false;
     }

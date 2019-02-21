@@ -120,7 +120,7 @@ public class pRRUInfoShape extends Shape {
     public void draw(Canvas canvas) {
         PointF f = MatrixConverHelper.mapMatrixPoint(this.mOverMatrix, this.center.x, this.center.y);
         canvas.drawBitmap(this.bmp_show, f.x - ((float) (this.bmp_show.getWidth() / 2)), f.y - ((float) (this.bmp_show.getHeight() / 2)), this.drawPaint);
-        canvas.drawText(this.text, f.x - ((float) (this.bmp_show.getWidth() / 2)), f.y, this.drawPaint);
+        canvas.drawText(this.text, f.x + ((float) (this.bmp_show.getWidth() / 2)), f.y, this.drawPaint);
     }
 
     public void setText(String text) {

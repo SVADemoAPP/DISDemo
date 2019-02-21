@@ -1,166 +1,130 @@
 package net.yoojia.imagemap.core;
 
-import net.yoojia.imagemap.support.ScaleUtility;
-import net.yoojia.imagemap.util.MatrixConverHelper;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.CornerPathEffect;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.Path;
 import android.graphics.PointF;
+import android.support.v4.internal.view.SupportMenu;
+import net.yoojia.imagemap.support.ScaleUtility;
+import net.yoojia.imagemap.util.MatrixConverHelper;
 
-public class LineShape extends Shape
-{
-    private float left;
-    private float top;
+public class LineShape extends Shape {
     private float bottom;
-    private float right;
-    private Paint paint;
+    private float dis;
+    private boolean isDraw = true;
+    private float left;
+    private Paint paint = new Paint();
+    private Paint paint2;
     private Path path;
+    private float right;
+    private float top;
 
-    public LineShape(Object tag, int coverColor,int stroken,String colorString)
-    {
+    public LineShape(Object tag, int coverColor) {
         super(tag, coverColor);
-        paint = new Paint();
-        paint.setColor(Color.parseColor(colorString));
-        paint.setStyle(Style.STROKE);
-        paint.setStrokeWidth(stroken);
-        paint.setAntiAlias(true);
-        paint.setPathEffect(new CornerPathEffect(9.9f));
+        this.paint.setColor(Color.parseColor("#8bc34a"));
+        this.paint.setStyle(Style.STROKE);
+        this.paint.setStrokeWidth(6.0f);
+        this.paint.setAntiAlias(true);
+        this.paint.setPathEffect(new CornerPathEffect(9.9f));
+        this.paint2 = new Paint();
+        this.paint2.setColor(SupportMenu.CATEGORY_MASK);
+        this.paint2.setAntiAlias(true);
+        this.paint2.setTextSize(30.0f);
     }
 
-    /**
-     * set Left,Top,Right,Bottim
-     * 
-     * @param coords
-     *            left,top,right,buttom
-     */
-    @Override
-    public void setValues(float... coords)
-    {
-        if (coords == null || coords.length != 4)
-        {
-            throw new IllegalArgumentException(
-                    "Please set values with 4 paramters: left,top,right,buttom");
+    public void setValues(float... coords) {
+        if (coords == null || coords.length != 5) {
+            throw new IllegalArgumentException("Please set values with 4 paramters: left,top,right,buttom");
         }
-        left = coords[0];
-        top = coords[1];
-        right = coords[2];
-        bottom = coords[3];
+        this.left = coords[0];
+        this.top = coords[1];
+        this.right = coords[2];
+        this.bottom = coords[3];
+        this.dis = coords[4];
     }
 
-    @Override
-    public void onScale(float scale)
-    {
-        left *= scale;
-        top *= scale;
-        right *= scale;
-        bottom *= scale;
-    }
-    public void setPath(Path path){
-    	this.path = path;
+    public void onScale(float scale) {
+        this.left *= scale;
+        this.top *= scale;
+        this.right *= scale;
+        this.bottom *= scale;
     }
 
-    @Override
-    public void draw(Canvas canvas)
-    {
-    	/*PointF pa = MatrixConverHelper.mapMatrixPoint(mOverMatrix, left, top);
-		PointF pb = MatrixConverHelper.mapMatrixPoint(mOverMatrix, right, bottom);*/
-       // canvas.drawLine(pa.x, pa.y, pb.x, pb.y, paint);
-        canvas.save();
-        canvas.setMatrix(mOverMatrix);
-        canvas.drawPath(path, paint);
-        canvas.restore();
+    public void setPath(Path path) {
+        this.path = path;
     }
 
-    @Override
-    public void scaleBy(float scale, float centerX, float centerY)
-    {
-
-        PointF leftTop = ScaleUtility.scaleByPoint(left, top, centerX, centerY,
-                scale);
-        left = leftTop.x;
-        top = leftTop.y;
-
-        PointF righBottom = ScaleUtility.scaleByPoint(right, bottom, centerX,
-                centerY, scale);
-        right = righBottom.x;
-        bottom = righBottom.y;
+    public void isDrawDis(boolean isDraw) {
+        this.isDraw = isDraw;
     }
 
-    @Override
-    public void translate(float deltaX, float deltaY)
-    {
-        left += deltaX;
-        right += deltaX;
-        top += deltaY;
-        bottom += deltaY;
+    public void draw(Canvas canvas) {
+        PointF pa = MatrixConverHelper.mapMatrixPoint(this.mOverMatrix, this.left, this.top);
+        PointF pb = MatrixConverHelper.mapMatrixPoint(this.mOverMatrix, this.right, this.bottom);
+        canvas.drawLine(pa.x, pa.y, pb.x, pb.y, this.paint);
+        if (this.isDraw) {
+            canvas.drawText(this.dis + "m", (pa.x + pb.x) / 2.0f, (pa.y + pb.y) / 2.0f, this.paint2);
+        }
     }
 
-    @Override
-    public boolean inArea(float x, float y)
-    {
-        boolean ret = false;
-        if ((x > left) && (x < right))
-        {
-            if ((y > top) && (y < bottom))
-            {
-                ret = true;
-            }
+    public void scaleBy(float scale, float centerX, float centerY) {
+        PointF leftTop = ScaleUtility.scaleByPoint(this.left, this.top, centerX, centerY, scale);
+        this.left = leftTop.x;
+        this.top = leftTop.y;
+        PointF righBottom = ScaleUtility.scaleByPoint(this.right, this.bottom, centerX, centerY, scale);
+        this.right = righBottom.x;
+        this.bottom = righBottom.y;
+    }
+
+    public void translate(float deltaX, float deltaY) {
+        this.left += deltaX;
+        this.right += deltaX;
+        this.top += deltaY;
+        this.bottom += deltaY;
+    }
+
+    public boolean inArea(float x, float y) {
+        if (x > this.left && x < this.right && y > this.top && y < this.bottom) {
         }
         return false;
     }
 
-    @Override
-    public PointF getCenterPoint()
-    {
-        float centerX = (left + right) / 2.0f;
-        float centerY = (top + bottom) / 2.0f;
-        return new PointF(centerX, centerY);
+    public PointF getCenterPoint() {
+        return new PointF((this.left + this.right) / 2.0f, (this.top + this.bottom) / 2.0f);
     }
 
-    @Override
-    public String getUrl()
-    {
+    public String getUrl() {
         return null;
     }
 
-    @Override
-    public String getPictureUrl()
-    {
+    public String getPictureUrl() {
         return null;
     }
 
-    @Override
-    public String getContent()
-    {
+    public String getContent() {
         return null;
     }
 
-    @Override
-    public String getTitle()
-    {
+    public String getTitle() {
         return null;
     }
 
-    @Override
-    public boolean bubbleTag()
-    {
+    public boolean bubbleTag() {
         return false;
     }
 
-	@Override
-	public float getCenterX() {
-		// TODO Auto-generated method stub
-		return (left+right)/2;
-	}
+    public float getCenterX() {
+        return (this.left + this.right) / 2.0f;
+    }
 
-	@Override
-	public float getCenterY() {
-		// TODO Auto-generated method stub
-		return (top+bottom)/2;
-	}
+    public float getCenterY() {
+        return (this.top + this.bottom) / 2.0f;
+    }
 
+    public float getRadius() {
+        return 0.0f;
+    }
 }
