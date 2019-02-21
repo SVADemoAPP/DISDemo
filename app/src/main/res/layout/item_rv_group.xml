@@ -11,27 +11,47 @@
         android:gravity="center"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@id/group_tv2"
+        app:layout_constraintRight_toLeftOf="@id/group_site"
         android:text="收缩"/>
     <TextView
-        android:id="@+id/group_tv2"
+        android:id="@+id/group_site"
+        android:layout_width="0dp"
+        android:layout_height="30dp"
+        android:gravity="center"
+        app:layout_constraintHorizontal_weight="3"
+        app:layout_constraintLeft_toRightOf="@id/group_tv1"
+        app:layout_constraintRight_toLeftOf="@id/group_export"
+        android:text="站点"/>
+    <TextView
+        android:id="@+id/group_export"
         android:layout_width="0dp"
         android:layout_height="30dp"
         android:gravity="center"
         app:layout_constraintHorizontal_weight="1"
-        app:layout_constraintLeft_toRightOf="@id/group_tv1"
-        app:layout_constraintRight_toLeftOf="@id/group_ll"
-        android:text="group2"/>
-    <LinearLayout
-        android:id="@+id/group_ll"
+        app:layout_constraintLeft_toRightOf="@id/group_site"
+        app:layout_constraintRight_toLeftOf="@id/group_merge"
+        android:text="导出"/>
+    <TextView
+        android:id="@+id/group_merge"
+        android:layout_width="0dp"
+        android:layout_height="30dp"
+        android:gravity="center"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintLeft_toRightOf="@id/group_export"
+        app:layout_constraintRight_toLeftOf="@id/group_delete"
+        android:text="合并"/>
+    <TextView
+        android:id="@+id/group_delete"
         android:orientation="horizontal"
         android:layout_width="0dp"
         android:layout_height="30dp"
-        app:layout_constraintHorizontal_weight="2"
-        app:layout_constraintLeft_toRightOf="@id/group_tv2"
+        android:text="删除"
+        android:gravity="center"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintLeft_toRightOf="@id/group_merge"
         app:layout_constraintRight_toRightOf="parent" >
 
-    </LinearLayout>
+    </TextView>
     <android.support.v7.widget.RecyclerView
         android:id="@+id/rv_member"
         android:layout_width="match_parent"

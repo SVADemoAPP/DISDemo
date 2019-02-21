@@ -27,7 +27,7 @@ import java.util.List;
 
 public class HomeActivity extends BaseActivity {
 
-    @ViewInject(R.id.tv1)
+    @ViewInject(R.id.home_tv1)
     private TextView tv1;
 
     @ViewInject(R.id.rv_group)
@@ -64,12 +64,12 @@ public class HomeActivity extends BaseActivity {
     }
 
     private void initSiteAndFloor(){
-        for(int i=0;i<10;i++){
+        for(int i=1;i<10;i++){
             SiteModel siteModel=new SiteModel();
-            siteModel.siteName="site"+i;
-            for(int j=0;j<5;j++){
+            siteModel.siteName="U"+i;
+            for(int j=1;j<5;j++){
                 FloorModel floorModel=new FloorModel();
-                floorModel.floorName="floor"+i+"_"+j;
+                floorModel.floorName="floor"+"_"+j;
                 floorModel.floorMap="map"+i+"_"+j;
                 siteModel.floorModelList.add(floorModel);
             }
@@ -87,7 +87,6 @@ public class HomeActivity extends BaseActivity {
 
     @Override
     public void initView() {
-        tv1.setText("测试setText");
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.setItemViewCacheSize(siteList.size());
         mRvGroupAdapter=new RvGroupAdapter(siteList,this,onMemberItemClickListener);
@@ -112,10 +111,10 @@ public class HomeActivity extends BaseActivity {
     };
 
 
-    @Event(type = View.OnClickListener.class,value = {R.id.tv1})
+    @Event(type = View.OnClickListener.class,value = {R.id.home_tv1})
     private void xClick(View v){
         switch (v.getId()){
-            case R.id.tv1:
+            case R.id.home_tv1:
                 showToast("tv1单击");
                 break;
             default:
@@ -123,10 +122,10 @@ public class HomeActivity extends BaseActivity {
         }
     }
 
-    @Event(type = View.OnLongClickListener.class,value = {R.id.tv1})
+    @Event(type = View.OnLongClickListener.class,value = {R.id.home_tv1})
     private boolean xLongClick(View v){
         switch (v.getId()){
-            case R.id.tv1:
+            case R.id.home_tv1:
                 showToast("tv1长按");
                 break;
             default:

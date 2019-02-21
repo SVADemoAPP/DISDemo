@@ -42,7 +42,7 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
 
     @Override
     public void onBindViewHolder(final MyViewHolder holder, final int position) {
-        holder.tv2.setText(siteList.get(position).siteName);
+        holder.site.setText(siteList.get(position).siteName);
         holder.floorList.clear();
         holder.floorList.addAll(siteList.get(position).floorModelList);
         holder.mRvMemberAdapter.setOnMemberItemClickListener(onMemberItemClickListener);
@@ -70,14 +70,17 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
 
 
     class MyViewHolder extends RecyclerView.ViewHolder{
-        TextView tv1,tv2;
+        TextView tv1,site,export,merge,delete;
         RecyclerView rv_member;
          RvMemberAdapter mRvMemberAdapter;
          List<FloorModel> floorList=new ArrayList<>();
         public MyViewHolder(View view) {
             super(view);
-            tv1=view.findViewById(R.id.group_tv1);
-            tv2=view.findViewById(R.id.group_tv2);
+            tv1 = view.findViewById(R.id.group_tv1);
+            site=view.findViewById(R.id.group_site);
+            export=view.findViewById(R.id.group_export);
+            merge=view.findViewById(R.id.group_merge);
+            delete=view.findViewById(R.id.group_delete);
             rv_member=view.findViewById(R.id.rv_member);
             rv_member.setLayoutManager(new LinearLayoutManager(mContext));
             mRvMemberAdapter=new RvMemberAdapter(floorList,mContext);
