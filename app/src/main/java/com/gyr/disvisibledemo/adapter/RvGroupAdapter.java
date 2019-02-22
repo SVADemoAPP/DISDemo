@@ -72,7 +72,6 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
         holder.export.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(mContext,"导出结果需要打开蓝牙",Toast.LENGTH_SHORT).show();
                 showNormalDialog("导出","请授权打开蓝牙");
             }
         });
@@ -108,6 +107,7 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         //...To-do
+                        Toast.makeText(mContext,"操作成功",Toast.LENGTH_SHORT).show();
                     }
                 });
         normalDialog.setNegativeButton("关闭",

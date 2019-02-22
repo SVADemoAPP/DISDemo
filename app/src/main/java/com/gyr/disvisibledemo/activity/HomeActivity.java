@@ -64,12 +64,12 @@ public class HomeActivity extends BaseActivity {
     }
 
     private void initSiteAndFloor(){
-        for(int i=1;i<10;i++){
+        for(int i=1;i<6;i++){
             SiteModel siteModel=new SiteModel();
             siteModel.siteName="U"+i;
             for(int j=1;j<5;j++){
                 FloorModel floorModel=new FloorModel();
-                floorModel.floorName="floor"+"_"+j;
+                floorModel.floorName="F"+"_"+j;
                 floorModel.floorMap="map"+i+"_"+j;
                 siteModel.floorModelList.add(floorModel);
             }

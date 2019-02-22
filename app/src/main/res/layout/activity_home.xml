@@ -35,8 +35,9 @@
                 android:layout_width="match_parent"
                 android:background="@null"
                 android:layout_height="20dp"
-                android:hint="输入要添加的文件名称"
-                android:textSize="18sp"
+                android:hint="输入添加的文件名"
+                android:textSize="14sp"
+
                 android:textColorHint="@android:color/darker_gray"
                 android:textColor="@color/home_text_color"/>
         </LinearLayout>
