@@ -1,12 +1,15 @@
 package com.gyr.disvisibledemo.adapter;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.gyr.disvisibledemo.R;
 import com.gyr.disvisibledemo.bean.FloorModel;
@@ -46,6 +49,7 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
         holder.floorList.clear();
         holder.floorList.addAll(siteList.get(position).floorModelList);
         holder.mRvMemberAdapter.setOnMemberItemClickListener(onMemberItemClickListener);
+        //展开按钮点击监听
         holder.tv1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -61,6 +65,57 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
                 }
             }
         });
+        //导出按钮点击监听
+        holder.export.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(mContext,"导出结果需要打开蓝牙",Toast.LENGTH_SHORT).show();
+                showNormalDialog("导出","请授权打开蓝牙");
+            }
+        });
+        //导出按钮点击监听
+        holder.merge.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showNormalDialog("合并","确定需要进行合并操作吗？");
+            }
+        });
+        //删除按钮点击监听
+        holder.delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showNormalDialog("刪除","确定要进行删除操作吗？");
+            }
+        });
+    }
+
+    private void showNormalDialog(String title, String message){
+        /* @setIcon 设置对话框图标
+         * @setTitle 设置对话框标题
+         * @setMessage 设置对话框消息提示
+         * setXXX方法返回Dialog对象，因此可以链式设置属性
+         */
+        final AlertDialog.Builder normalDialog =
+                new AlertDialog.Builder(mContext);
+//        normalDialog.setIcon(R.drawable.icon_dialog);
+        normalDialog.setTitle(title);
+        normalDialog.setMessage(message);
+        normalDialog.setPositiveButton("确定",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //...To-do
+                    }
+                });
+        normalDialog.setNegativeButton("关闭",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //...To-do
+                    }
+                });
+        // 显示
+        normalDialog.show();
     }
 
     @Override
