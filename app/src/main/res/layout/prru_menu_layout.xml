@@ -1,46 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="60dp"
+    android:layout_width="wrap_content"
+    android:background="@mipmap/prru_menu_bg"
     android:orientation="vertical"
-    android:layout_height="100dp">
+    android:paddingLeft="10dp"
+    android:layout_height="wrap_content">
+
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/colorAccent"
+        android:id="@+id/menu_bind"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="绑定"
+        android:textSize="12sp"
         android:gravity="center"
-        android:textSize="10sp"
-        android:text="测试一下"
-        android:textColor="@android:color/white"/>
+        android:drawableLeft="@mipmap/prru_menu_bind"/>
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/colorAccent"
+        android:id="@+id/menu_move"
+        android:textSize="12sp"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="移动"
         android:gravity="center"
-        android:textSize="10sp"
-        android:text="测试一下"
-        android:textColor="@android:color/white"/>
+        android:drawableLeft="@mipmap/prru_menu_move"/>
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/colorAccent"
+        android:id="@+id/menu_camera"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="拍照"
+        android:textSize="12sp"
         android:gravity="center"
-        android:textSize="10sp"
-        android:text="测试一下"
-        android:textColor="@android:color/white"/>
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/colorAccent"
-        android:gravity="center"
-        android:textSize="10sp"
-        android:text="测试一下"
-        android:textColor="@android:color/white"/>
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/colorAccent"
-        android:gravity="center"
-        android:textSize="10sp"
-        android:text="测试一下"
-        android:textColor="@android:color/white"/>
+        android:drawableLeft="@mipmap/prru_menu_camera"/>
 </LinearLayout>
