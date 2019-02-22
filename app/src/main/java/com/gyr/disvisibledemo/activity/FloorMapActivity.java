@@ -12,6 +12,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 import com.gyr.disvisibledemo.R;
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
 import com.gyr.disvisibledemo.util.Constant;
@@ -89,6 +91,8 @@ public class FloorMapActivity extends BaseActivity {
                             mNowSelectPrru.setPrruShowType(pRRUInfoShape.pRRUType.inArea);
                         }
                     }
+                    IntentIntegrator integrator = new IntentIntegrator(FloorMapActivity.this);
+                    integrator.initiateScan();
                     break;
                 case R.id.menu_move:
                     break;
@@ -127,7 +131,7 @@ public class FloorMapActivity extends BaseActivity {
                         menu_bind.setText("解绑");
                     }else {
                         menu_bind.setText("绑定");
-                    };
+                    }
                 }
             }
         });
@@ -186,10 +190,19 @@ public class FloorMapActivity extends BaseActivity {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode){
             case CODE_OPEN_CAMERA:
-                showToast("拍照保存到："+Constant.sdPath+"/photos/"+mNowSelectPrru.getTag()+".png");
+                if(resultCode==-1) {
+                    showToast("拍照保存到：" + Constant.sdPath + "/photos/" + mNowSelectPrru.getTag() + ".png");
+                }else{
+                    showToast("拍照取消了");
+                }
                 break;
             default:
                 break;
+        }
+        IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (scanResult != null) {
+            String result = scanResult.getContents();
+            showToast("条码扫描："+result);
         }
     }
 
