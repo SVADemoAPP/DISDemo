@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 
 import com.gyr.disvisibledemo.R;
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
@@ -33,6 +34,8 @@ public class FloorMapActivity extends BaseActivity {
     private int mWidth,mHeight;
     private Random mRandom=new Random();
     private View mMenuView;
+    private TextView menu_bind,menu_move,menu_camera;
+    private pRRUInfoShape mNowSelectPrru;
     @Override
     public void setContentLayout() {
         setContentView(R.layout.activity_floor_map);
@@ -50,27 +53,66 @@ public class FloorMapActivity extends BaseActivity {
         int prruX1=mRandom.nextInt(mWidth);
         int prruY1=mRandom.nextInt(mHeight);
         pRRUInfoShape pRRUInfoShape1=new pRRUInfoShape("test1",Color.YELLOW,this);
-//        pRRUInfoShape1.setText("长按测试");
         pRRUInfoShape1.setValues(prruX1, prruY1);
+        pRRUInfoShape1.setBind(false);
         pRRUInfoShape1.setPrruShowType(pRRUInfoShape.pRRUType.outArea);
         map.addShape(pRRUInfoShape1,false);
         int prruX2=mRandom.nextInt(mWidth);
         int prruY2=mRandom.nextInt(mHeight);
         pRRUInfoShape pRRUInfoShape2=new pRRUInfoShape("test2",Color.YELLOW,this);
-//        pRRUInfoShape2.setText("长按测试");
         pRRUInfoShape2.setValues(prruX2, prruY2);
+        pRRUInfoShape2.setBind(true);
         pRRUInfoShape2.setPrruShowType(pRRUInfoShape.pRRUType.inArea);
         map.addShape(pRRUInfoShape2,false);
 
     }
 
+    private View.OnClickListener onMenuClickListener=new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()){
+                case R.id.menu_bind:
+                    if(mNowSelectPrru!=null){
+
+                        if(mNowSelectPrru.isBind()){
+                            mNowSelectPrru.setBind(false);
+                            mNowSelectPrru.setPrruShowType(pRRUInfoShape.pRRUType.outArea);
+                        }else{
+                            mNowSelectPrru.setBind(true);
+                            mNowSelectPrru.setPrruShowType(pRRUInfoShape.pRRUType.inArea);
+                        }
+                    }
+                    break;
+                case R.id.menu_move:
+                    break;
+                case R.id.menu_camera:
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+
     @Override
     public void initView() {
         mMenuView=View.inflate(this,R.layout.prru_menu_layout,null);
+        menu_bind=mMenuView.findViewById(R.id.menu_bind);
+        menu_move=mMenuView.findViewById(R.id.menu_move);
+        menu_camera=mMenuView.findViewById(R.id.menu_camera);
+        menu_bind.setOnClickListener(onMenuClickListener);
+        menu_move.setOnClickListener(onMenuClickListener);
+        menu_camera.setOnClickListener(onMenuClickListener);
         map.setBubbleView(mMenuView, new Bubble.RenderDelegate() {
             @Override
             public void onDisplay(Shape shape, View bubbleView) {
 //                Log.e("msg",shape.toString());
+                if(shape instanceof pRRUInfoShape){
+                    if(((pRRUInfoShape) shape).isBind()){
+                        menu_bind.setText("解绑");
+                    }else {
+                        menu_bind.setText("绑定");
+                    };
+                }
             }
         });
 //        mMenuView.setVisibility(View.VISIBLE);
@@ -88,6 +130,7 @@ public class FloorMapActivity extends BaseActivity {
             @Override
             public void onPrruInfoShapeClick(pRRUInfoShape prruinfoshape, float f, float f2) {
                 showToast("单击:"+prruinfoshape.getTag());
+                mNowSelectPrru=prruinfoshape;
             }
 
             @Override

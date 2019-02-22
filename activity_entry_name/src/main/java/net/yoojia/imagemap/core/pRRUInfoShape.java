@@ -27,6 +27,15 @@ public class pRRUInfoShape extends Shape {
     private String url;
     private View view_inArea;
     private View view_outArea;
+    private boolean isBind=false;
+
+    public boolean isBind() {
+        return isBind;
+    }
+
+    public void setBind(boolean bind) {
+        isBind = bind;
+    }
 
     public enum pRRUType {
         outArea,
