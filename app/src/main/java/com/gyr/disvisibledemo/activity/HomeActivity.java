@@ -1,5 +1,6 @@
 package com.gyr.disvisibledemo.activity;
 
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -27,9 +28,8 @@ import java.util.List;
 
 public class HomeActivity extends BaseActivity {
 
-    @ViewInject(R.id.home_tv1)
-    private TextView tv1;
-
+    @ViewInject(R.id.tv_confirm)
+    private TextView tv_confirm;
     @ViewInject(R.id.rv_group)
     private RecyclerView mRecyclerView;
 
@@ -87,6 +87,7 @@ public class HomeActivity extends BaseActivity {
 
     @Override
     public void initView() {
+        tv_confirm.getPaint().setFlags(Paint. UNDERLINE_TEXT_FLAG);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.setItemViewCacheSize(siteList.size());
         mRvGroupAdapter=new RvGroupAdapter(siteList,this,onMemberItemClickListener);
@@ -111,23 +112,23 @@ public class HomeActivity extends BaseActivity {
     };
 
 
-    @Event(type = View.OnClickListener.class,value = {R.id.home_tv1})
+    @Event(type = View.OnClickListener.class,value = {})
     private void xClick(View v){
         switch (v.getId()){
-            case R.id.home_tv1:
-                showToast("tv1单击");
-                break;
+//            case R.id.home_tv1:
+//                showToast("tv1单击");
+//                break;
             default:
                 break;
         }
     }
 
-    @Event(type = View.OnLongClickListener.class,value = {R.id.home_tv1})
+    @Event(type = View.OnLongClickListener.class,value = {})
     private boolean xLongClick(View v){
         switch (v.getId()){
-            case R.id.home_tv1:
-                showToast("tv1长按");
-                break;
+//            case R.id.home_tv1:
+//                showToast("tv1长按");
+//                break;
             default:
                 break;
         }

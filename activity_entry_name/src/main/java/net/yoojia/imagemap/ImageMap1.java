@@ -258,7 +258,7 @@ public class ImageMap1 extends FrameLayout implements ShapeExtension, OnShapeAct
             }
             if (this.bubble != null) {
                 this.bubble.showAtShape(shape);
-                this.view.setVisibility(View.GONE);
+                this.view.setVisibility(View.VISIBLE);
             }
         }
     }
@@ -271,7 +271,7 @@ public class ImageMap1 extends FrameLayout implements ShapeExtension, OnShapeAct
             }
             if (this.bubble != null) {
                 this.bubble.showAtShape(shape);
-                this.view.setVisibility(View.GONE);
+                this.view.setVisibility(View.VISIBLE);
             }
         }
     }
@@ -284,7 +284,7 @@ public class ImageMap1 extends FrameLayout implements ShapeExtension, OnShapeAct
             }
             if (this.bubble != null) {
                 this.bubble.showAtShape(shape);
-                this.view.setVisibility(View.GONE);
+                this.view.setVisibility(View.VISIBLE);
             }
         }
     }
@@ -297,7 +297,7 @@ public class ImageMap1 extends FrameLayout implements ShapeExtension, OnShapeAct
             }
             if (this.bubble != null) {
                 this.bubble.showAtShape(shape);
-                this.view.setVisibility(View.GONE);
+                this.view.setVisibility(View.VISIBLE);
             }
         }
     }
@@ -310,7 +310,7 @@ public class ImageMap1 extends FrameLayout implements ShapeExtension, OnShapeAct
             }
             if (this.bubble != null) {
                 this.bubble.showAtShape(shape);
-                this.view.setVisibility(View.GONE);
+                this.view.setVisibility(View.VISIBLE);
             }
         }
     }

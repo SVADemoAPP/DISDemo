@@ -76,7 +76,6 @@ public class Bubble extends FrameLayout
         {
             renderDelegate.onDisplay(shape, view);
         }
-        // view.setVisibility(View.VISIBLE);
     }
 
     private PointF point=new PointF(0.0f,0.0f);
@@ -98,7 +97,7 @@ public class Bubble extends FrameLayout
         {
             posY = center.y - view.getHeight();
         }
-        setBubbleViewAtPosition(posX, posY);
+        setBubbleViewAtPosition(posX+100, posY+50);
     }
 
     private void setBubbleViewAtPosition(float x, float y)

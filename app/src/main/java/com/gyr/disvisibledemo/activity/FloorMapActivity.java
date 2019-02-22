@@ -3,6 +3,8 @@ package com.gyr.disvisibledemo.activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.util.Log;
+import android.view.View;
 
 import com.gyr.disvisibledemo.R;
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
@@ -10,6 +12,7 @@ import com.gyr.disvisibledemo.util.Constant;
 
 import net.yoojia.imagemap.ImageMap1;
 import net.yoojia.imagemap.TouchImageView1;
+import net.yoojia.imagemap.core.Bubble;
 import net.yoojia.imagemap.core.CollectPointShape;
 import net.yoojia.imagemap.core.MoniPointShape;
 import net.yoojia.imagemap.core.PushMessageShape;
@@ -29,6 +32,7 @@ public class FloorMapActivity extends BaseActivity {
     private String mFloorMap;
     private int mWidth,mHeight;
     private Random mRandom=new Random();
+    private View mMenuView;
     @Override
     public void setContentLayout() {
         setContentView(R.layout.activity_floor_map);
@@ -43,13 +47,33 @@ public class FloorMapActivity extends BaseActivity {
         mWidth=bitmap.getWidth();
         mHeight=bitmap.getHeight();
         map.setMapBitmap(bitmap);
-        int prruX=mRandom.nextInt(mWidth);
-        int prruY=mRandom.nextInt(mHeight);
-        pRRUInfoShape pRRUInfoShape=new pRRUInfoShape("test",Color.YELLOW,this);
-        pRRUInfoShape.setText("长按测试");
-        pRRUInfoShape.setValues(prruX, prruY);
-        map.addShape(pRRUInfoShape,false);
+        int prruX1=mRandom.nextInt(mWidth);
+        int prruY1=mRandom.nextInt(mHeight);
+        pRRUInfoShape pRRUInfoShape1=new pRRUInfoShape("test1",Color.YELLOW,this);
+//        pRRUInfoShape1.setText("长按测试");
+        pRRUInfoShape1.setValues(prruX1, prruY1);
+        pRRUInfoShape1.setPrruShowType(pRRUInfoShape.pRRUType.outArea);
+        map.addShape(pRRUInfoShape1,false);
+        int prruX2=mRandom.nextInt(mWidth);
+        int prruY2=mRandom.nextInt(mHeight);
+        pRRUInfoShape pRRUInfoShape2=new pRRUInfoShape("test2",Color.YELLOW,this);
+//        pRRUInfoShape2.setText("长按测试");
+        pRRUInfoShape2.setValues(prruX2, prruY2);
+        pRRUInfoShape2.setPrruShowType(pRRUInfoShape.pRRUType.inArea);
+        map.addShape(pRRUInfoShape2,false);
 
+    }
+
+    @Override
+    public void initView() {
+        mMenuView=View.inflate(this,R.layout.prru_menu_layout,null);
+        map.setBubbleView(mMenuView, new Bubble.RenderDelegate() {
+            @Override
+            public void onDisplay(Shape shape, View bubbleView) {
+//                Log.e("msg",shape.toString());
+            }
+        });
+//        mMenuView.setVisibility(View.VISIBLE);
         map.setOnShapeClickListener(new ShapeExtension.OnShapeActionListener() {
             @Override
             public void onCollectShapeClick(CollectPointShape collectPointShape, float f, float f2) {
@@ -91,11 +115,6 @@ public class FloorMapActivity extends BaseActivity {
 
             }
         });
-    }
-
-    @Override
-    public void initView() {
-
     }
 
     @Override

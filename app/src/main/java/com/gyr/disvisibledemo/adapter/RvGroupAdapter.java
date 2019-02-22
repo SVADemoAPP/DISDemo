@@ -8,6 +8,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,15 +51,17 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
         holder.floorList.addAll(siteList.get(position).floorModelList);
         holder.mRvMemberAdapter.setOnMemberItemClickListener(onMemberItemClickListener);
         //展开按钮点击监听
-        holder.tv1.setOnClickListener(new View.OnClickListener() {
+        holder.img.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(holder.rv_member.getVisibility()==View.VISIBLE){
                     holder.rv_member.setVisibility(View.GONE);
-                    holder.tv1.setText("展开");
+//                    holder.tv1.setText("展开");
+                    holder.img.setImageResource(R.mipmap.group_arrow_up);
                 }else{
                     holder.rv_member.setVisibility(View.VISIBLE);
-                    holder.tv1.setText("收缩");
+//                    holder.tv1.setText("收缩");
+                    holder.img.setImageResource(R.mipmap.group_arrow_down);
                     if(holder.itemView.getParent() instanceof RecyclerView){
                         ((RecyclerView)holder.itemView.getParent()).scrollToPosition(position);
                     }
@@ -125,13 +128,14 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
 
 
     class MyViewHolder extends RecyclerView.ViewHolder{
-        TextView tv1,site,export,merge,delete;
+        ImageView img;
+        TextView site,export,merge,delete;
         RecyclerView rv_member;
          RvMemberAdapter mRvMemberAdapter;
          List<FloorModel> floorList=new ArrayList<>();
         public MyViewHolder(View view) {
             super(view);
-            tv1 = view.findViewById(R.id.group_tv1);
+            img = view.findViewById(R.id.group_img);
             site=view.findViewById(R.id.group_site);
             export=view.findViewById(R.id.group_export);
             merge=view.findViewById(R.id.group_merge);
