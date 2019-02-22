@@ -1,8 +1,13 @@
 package com.gyr.disvisibledemo.activity;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.net.Uri;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -25,6 +30,7 @@ import net.yoojia.imagemap.core.pRRUInfoShape;
 import org.xutils.view.annotation.ViewInject;
 import org.xutils.x;
 
+import java.io.File;
 import java.util.Random;
 
 public class FloorMapActivity extends BaseActivity {
@@ -36,6 +42,7 @@ public class FloorMapActivity extends BaseActivity {
     private View mMenuView;
     private TextView menu_bind,menu_move,menu_camera;
     private pRRUInfoShape mNowSelectPrru;
+    private final int CODE_OPEN_CAMERA=1;
     @Override
     public void setContentLayout() {
         setContentView(R.layout.activity_floor_map);
@@ -86,6 +93,8 @@ public class FloorMapActivity extends BaseActivity {
                 case R.id.menu_move:
                     break;
                 case R.id.menu_camera:
+//                    openActivity(CameraActivity.class);
+                    openSysCamera(mNowSelectPrru.getTag()+".png");
                     break;
                 default:
                     break;
@@ -93,6 +102,13 @@ public class FloorMapActivity extends BaseActivity {
         }
     };
 
+
+    private void openSysCamera(String photoName) {
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(
+                new File(Constant.sdPath+"/photos", photoName)));
+        startActivityForResult(cameraIntent, CODE_OPEN_CAMERA);
+    }
     @Override
     public void initView() {
         mMenuView=View.inflate(this,R.layout.prru_menu_layout,null);
@@ -129,7 +145,7 @@ public class FloorMapActivity extends BaseActivity {
 
             @Override
             public void onPrruInfoShapeClick(pRRUInfoShape prruinfoshape, float f, float f2) {
-                showToast("单击:"+prruinfoshape.getTag());
+//                showToast("单击:"+prruinfoshape.getTag());
                 mNowSelectPrru=prruinfoshape;
             }
 
@@ -164,4 +180,17 @@ public class FloorMapActivity extends BaseActivity {
     public void dealLogicAfterInitView() {
 
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode){
+            case CODE_OPEN_CAMERA:
+                showToast("拍照保存到："+Constant.sdPath+"/photos/"+mNowSelectPrru.getTag()+".png");
+                break;
+            default:
+                break;
+        }
+    }
+
 }

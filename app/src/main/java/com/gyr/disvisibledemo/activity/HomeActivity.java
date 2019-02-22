@@ -46,6 +46,10 @@ public class HomeActivity extends BaseActivity {
         if (!dir.exists()) {
             dir.mkdirs();
         }
+        File photosDir = new File(Constant.sdPath + "/photos/");
+        if (!photosDir.exists()) {
+            photosDir.mkdirs();
+        }
         if(SharedPrefHelper.getBoolean(this,"isFirst",true)) {
             SharedPrefHelper.putBoolean(this,"isFirst",false);
             for(int i=0;i<5;i++){
@@ -102,7 +106,7 @@ public class HomeActivity extends BaseActivity {
     private RvMemberAdapter.OnMemberItemClickListener onMemberItemClickListener=new RvMemberAdapter.OnMemberItemClickListener() {
         @Override
         public void memberClick(String floorMap, int type) {
-            showToast(floorMap);
+//            showToast(floorMap);
             Bundle bundle=new Bundle();
             bundle.putString("floormap",floorMap);
             openActivity(FloorMapActivity.class,bundle);

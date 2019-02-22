@@ -97,7 +97,7 @@ public class Bubble extends FrameLayout
         {
             posY = center.y - view.getHeight();
         }
-        setBubbleViewAtPosition(posX+110, posY+90);
+        setBubbleViewAtPosition(posX+140, posY+110);
     }
 
     private void setBubbleViewAtPosition(float x, float y)
