@@ -5,10 +5,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -125,7 +123,7 @@ public class FloorMapActivity extends BaseActivity {
         map.setBubbleView(mMenuView, new Bubble.RenderDelegate() {
             @Override
             public void onDisplay(Shape shape, View bubbleView) {
-//                Log.e("msg",shape.toString());
+    //                Log.e("msg",shape.toString());
                 if(shape instanceof pRRUInfoShape){
                     if(((pRRUInfoShape) shape).isBind()){
                         menu_bind.setText("解绑");

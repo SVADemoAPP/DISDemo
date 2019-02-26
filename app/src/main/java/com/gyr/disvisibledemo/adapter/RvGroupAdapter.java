@@ -1,8 +1,11 @@
 package com.gyr.disvisibledemo.adapter;
 
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -13,18 +16,22 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.gyr.disvisibledemo.R;
+import com.gyr.disvisibledemo.activity.HomeActivity;
 import com.gyr.disvisibledemo.bean.FloorModel;
 import com.gyr.disvisibledemo.bean.SiteModel;
+import com.gyr.disvisibledemo.util.BlueUntil;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static android.support.v4.app.ActivityCompat.startActivityForResult;
 
 public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHolder>{
 
     private List<SiteModel> siteList;
     private Context mContext;
     private RvMemberAdapter.OnMemberItemClickListener onMemberItemClickListener;
-
+    private OnGroupItemClickListener onGroupItemClickListener;
 
     public RvGroupAdapter(List<SiteModel> siteList, Context mContext,
                           RvMemberAdapter.OnMemberItemClickListener onMemberItemClickListener) {
@@ -33,7 +40,9 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
         this.onMemberItemClickListener=onMemberItemClickListener;
     }
 
-
+    public void setOnGroupItemClickListener(OnGroupItemClickListener onGroupItemClickListener) {
+        this.onGroupItemClickListener = onGroupItemClickListener;
+    }
 
     @Override
     public MyViewHolder onCreateViewHolder( ViewGroup viewGroup, int i) {
@@ -72,7 +81,7 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
         holder.export.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showNormalDialog("导出","请授权打开蓝牙");
+                onGroupItemClickListener.groupClick(siteList.get(position).siteName,0);
             }
         });
         //导出按钮点击监听
@@ -90,6 +99,7 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
             }
         });
     }
+
 
     private void showNormalDialog(String title, String message){
         /* @setIcon 设置对话框图标
@@ -146,6 +156,8 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
             rv_member.setAdapter(mRvMemberAdapter);
         }
     }
-
+    public interface OnGroupItemClickListener{
+        void groupClick(String siteName,int type);
+    }
 
 }

@@ -1,11 +1,14 @@
 package com.gyr.disvisibledemo.activity;
 
+import android.bluetooth.BluetoothAdapter;
+import android.content.Intent;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.gyr.disvisibledemo.R;
 import com.gyr.disvisibledemo.adapter.RvGroupAdapter;
@@ -14,6 +17,7 @@ import com.gyr.disvisibledemo.bean.FloorModel;
 import com.gyr.disvisibledemo.bean.SiteModel;
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
 import com.gyr.disvisibledemo.framework.sharef.SharedPrefHelper;
+import com.gyr.disvisibledemo.util.BlueUntil;
 import com.gyr.disvisibledemo.util.Constant;
 import com.gyr.disvisibledemo.util.FileUtil;
 
@@ -95,6 +99,7 @@ public class HomeActivity extends BaseActivity {
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.setItemViewCacheSize(siteList.size());
         mRvGroupAdapter=new RvGroupAdapter(siteList,this,onMemberItemClickListener);
+        mRvGroupAdapter.setOnGroupItemClickListener(onGroupItemClickListener);
         mRecyclerView.setAdapter(mRvGroupAdapter);
     }
 
@@ -103,7 +108,7 @@ public class HomeActivity extends BaseActivity {
 
     }
 
-    private RvMemberAdapter.OnMemberItemClickListener onMemberItemClickListener=new RvMemberAdapter.OnMemberItemClickListener() {
+    private RvMemberAdapter.OnMemberItemClickListener onMemberItemClickListener = new RvMemberAdapter.OnMemberItemClickListener() {
         @Override
         public void memberClick(String floorMap, int type) {
 //            showToast(floorMap);
@@ -114,6 +119,36 @@ public class HomeActivity extends BaseActivity {
 //            String ss= (String) HomeActivity.this.getIntent().getExtras().get("map");
         }
     };
+
+    private RvGroupAdapter.OnGroupItemClickListener onGroupItemClickListener = new RvGroupAdapter.OnGroupItemClickListener() {
+        @Override
+        public void groupClick(String siteName, int type) {
+            if (type == 0){
+                BluetoothAdapter mAdapter = BlueUntil.getBluetoothAdapter();
+                if(mAdapter == null){
+                    showToast("本机没有找到蓝牙硬件，无法使用蓝牙功能！");
+                }
+                if(!mAdapter.isEnabled()){
+                    //弹出对话框提示用户是后打开
+                    Intent enabler = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                    startActivityForResult(enabler,0);
+                    //不做提示，强行打开，此方法需要权限<uses-permissionandroid:name="android.permission.BLUETOOTH_ADMIN" />
+                    // mAdapter.enable();
+                }
+            }
+        }
+    };
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode,resultCode,data);
+        if(requestCode == 0){
+            if(resultCode == RESULT_OK){
+                showToast("OK!");
+            }
+        }
+
+    }
 
 
     @Event(type = View.OnClickListener.class,value = {})
