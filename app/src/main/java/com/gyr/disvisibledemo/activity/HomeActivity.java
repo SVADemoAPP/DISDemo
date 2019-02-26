@@ -6,13 +6,21 @@ import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.gyr.disvisibledemo.R;
 import com.gyr.disvisibledemo.adapter.RvGroupAdapter;
 import com.gyr.disvisibledemo.adapter.RvMemberAdapter;
+import com.gyr.disvisibledemo.adapter.RvSearchAdapter;
 import com.gyr.disvisibledemo.bean.FloorModel;
 import com.gyr.disvisibledemo.bean.SiteModel;
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
@@ -20,6 +28,7 @@ import com.gyr.disvisibledemo.framework.sharef.SharedPrefHelper;
 import com.gyr.disvisibledemo.util.BlueUntil;
 import com.gyr.disvisibledemo.util.Constant;
 import com.gyr.disvisibledemo.util.FileUtil;
+import com.gyr.disvisibledemo.view.popup.SuperPopupWindow;
 
 import org.xutils.view.annotation.Event;
 import org.xutils.view.annotation.ViewInject;
@@ -34,11 +43,22 @@ public class HomeActivity extends BaseActivity {
 
     @ViewInject(R.id.tv_confirm)
     private TextView tv_confirm;
+    @ViewInject(R.id.et_search)
+    private EditText et_search;
     @ViewInject(R.id.rv_group)
     private RecyclerView mRecyclerView;
+    @ViewInject(R.id.ll_top)
+    private LinearLayout ll_top;
 
     private RvGroupAdapter mRvGroupAdapter;
     private List<SiteModel> siteList=new ArrayList<>();
+    private SuperPopupWindow mSearchWindow;
+
+    private RecyclerView search_rv;
+    private RvSearchAdapter mRvSearchAdaper;
+    private List<String> mSearchList=new ArrayList<>();
+    private String mSearchStr="";
+
     @Override
     public void setContentLayout() {
         setContentView(R.layout.activity_home);
@@ -101,10 +121,39 @@ public class HomeActivity extends BaseActivity {
         mRvGroupAdapter=new RvGroupAdapter(siteList,this,onMemberItemClickListener);
         mRvGroupAdapter.setOnGroupItemClickListener(onGroupItemClickListener);
         mRecyclerView.setAdapter(mRvGroupAdapter);
+        et_search.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                //监听搜索框的输入变化完成之后的逻辑
+                mSearchStr=s.toString();
+                int len=mSearchStr.length();
+                if(len==0){
+                    hideSearchPop();
+                }else {
+                    mSearchList.clear();
+                    for (int i = 0; i < len; i++) {
+                        mSearchList.add(mSearchStr+"_"+i);
+                    }
+                    showSearchPop();
+                    mRvSearchAdaper.notifyDataSetChanged();
+                }
+            }
+        });
     }
 
     @Override
     public void dealLogicAfterInitView() {
+
 
     }
 
@@ -120,6 +169,35 @@ public class HomeActivity extends BaseActivity {
         }
     };
 
+    private void showSearchPop() {
+
+        if (mSearchWindow == null) {
+            mSearchWindow = new SuperPopupWindow(this, R.layout.popup_search_layout, new SuperPopupWindow.ViewListener() {
+                @Override
+                public void getViewOfPop(View view) {
+                    search_rv=view.findViewById(R.id.search_rv);
+                    search_rv.setLayoutManager(new LinearLayoutManager(HomeActivity.this));
+                    mRvSearchAdaper=new RvSearchAdapter(mSearchList,HomeActivity.this);
+                    mRvSearchAdaper.setOnSearchItemClickListener(new RvSearchAdapter.OnSearchItemClickListener() {
+                        @Override
+                        public void searchClick(String str) {
+                            showToast("搜索单击回调："+str);
+                        }
+                    });
+                    search_rv.setAdapter(mRvSearchAdaper);
+                }
+            });
+            mSearchWindow.setWidthAndHeight(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
+            mSearchWindow.setOutsideTouchable(false);
+        }
+        mSearchWindow.showPopupWindowAsDropDown(ll_top);
+    }
+
+    private void hideSearchPop() {
+        if(mSearchWindow!=null){
+            mSearchWindow.hidePopupWindow();
+        }
+    }
     private RvGroupAdapter.OnGroupItemClickListener onGroupItemClickListener = new RvGroupAdapter.OnGroupItemClickListener() {
         @Override
         public void groupClick(String siteName, int type) {
@@ -150,13 +228,12 @@ public class HomeActivity extends BaseActivity {
 
     }
 
-
-    @Event(type = View.OnClickListener.class,value = {})
+    @Event(type = View.OnClickListener.class,value = {R.id.tv_confirm})
     private void xClick(View v){
         switch (v.getId()){
-//            case R.id.home_tv1:
-//                showToast("tv1单击");
-//                break;
+            case R.id.tv_confirm:
+                showToast("点击确定,搜索值："+mSearchStr);
+                break;
             default:
                 break;
         }

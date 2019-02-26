@@ -7,4 +7,5 @@
     <color name="home_text_color">#00eefd</color>
     <color name="group_text_color">#223f5c</color>
     <color name="home_top_bg_color">#040a0e</color>
+    <color name="transparent_pop_color">#99000000</color>
 </resources>

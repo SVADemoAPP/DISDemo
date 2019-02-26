@@ -39,7 +39,7 @@
                 android:layout_height="20dp"
                 android:hint="输入添加的文件名"
                 android:textSize="14sp"
-
+                android:id="@+id/et_search"
                 android:textColorHint="@android:color/darker_gray"
                 android:textColor="@color/home_text_color"/>
         </LinearLayout>
