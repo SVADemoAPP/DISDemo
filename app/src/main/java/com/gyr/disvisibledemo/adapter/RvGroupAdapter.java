@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,7 +27,7 @@ import java.util.List;
 
 import static android.support.v4.app.ActivityCompat.startActivityForResult;
 
-public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHolder>{
+public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHolder> {
 
     private List<SiteModel> siteList;
     private Context mContext;
@@ -37,7 +38,7 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
                           RvMemberAdapter.OnMemberItemClickListener onMemberItemClickListener) {
         this.siteList = siteList;
         this.mContext = mContext;
-        this.onMemberItemClickListener=onMemberItemClickListener;
+        this.onMemberItemClickListener = onMemberItemClickListener;
     }
 
     public void setOnGroupItemClickListener(OnGroupItemClickListener onGroupItemClickListener) {
@@ -45,10 +46,10 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
     }
 
     @Override
-    public MyViewHolder onCreateViewHolder( ViewGroup viewGroup, int i) {
-        View view=LayoutInflater.from(mContext)
-                .inflate(R.layout.item_rv_group,viewGroup,false);
-        MyViewHolder holder=new MyViewHolder(view);
+    public MyViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
+        View view = LayoutInflater.from(mContext)
+                .inflate(R.layout.item_rv_group, viewGroup, false);
+        MyViewHolder holder = new MyViewHolder(view);
 
         return holder;
     }
@@ -60,19 +61,19 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
         holder.floorList.addAll(siteList.get(position).floorModelList);
         holder.mRvMemberAdapter.setOnMemberItemClickListener(onMemberItemClickListener);
         //展开按钮点击监听
-        holder.img.setOnClickListener(new View.OnClickListener() {
+        holder.rlArrow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(holder.rv_member.getVisibility()==View.VISIBLE){
+                if (holder.rv_member.getVisibility() == View.VISIBLE) {
                     holder.rv_member.setVisibility(View.GONE);
 //                    holder.tv1.setText("展开");
                     holder.img.setImageResource(R.mipmap.group_arrow_up);
-                }else{
+                } else {
                     holder.rv_member.setVisibility(View.VISIBLE);
 //                    holder.tv1.setText("收缩");
                     holder.img.setImageResource(R.mipmap.group_arrow_down);
-                    if(holder.itemView.getParent() instanceof RecyclerView){
-                        ((RecyclerView)holder.itemView.getParent()).scrollToPosition(position);
+                    if (holder.itemView.getParent() instanceof RecyclerView) {
+                        ((RecyclerView) holder.itemView.getParent()).scrollToPosition(position);
                     }
                 }
             }
@@ -81,27 +82,27 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
         holder.export.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onGroupItemClickListener.groupClick(siteList.get(position).siteName,0);
+                onGroupItemClickListener.groupClick(siteList.get(position).siteName, 0);
             }
         });
         //导出按钮点击监听
         holder.merge.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showNormalDialog("合并","确定需要进行合并操作吗？");
+                showNormalDialog("合并", "确定需要进行合并操作吗？");
             }
         });
         //删除按钮点击监听
         holder.delete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showNormalDialog("刪除","确定要进行删除操作吗？");
+                showNormalDialog("刪除", "确定要进行删除操作吗？");
             }
         });
     }
 
 
-    private void showNormalDialog(String title, String message){
+    private void showNormalDialog(String title, String message) {
         /* @setIcon 设置对话框图标
          * @setTitle 设置对话框标题
          * @setMessage 设置对话框消息提示
@@ -117,7 +118,7 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         //...To-do
-                        Toast.makeText(mContext,"操作成功",Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mContext, "操作成功", Toast.LENGTH_SHORT).show();
                     }
                 });
         normalDialog.setNegativeButton("关闭",
@@ -137,27 +138,31 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
     }
 
 
-    class MyViewHolder extends RecyclerView.ViewHolder{
+    class MyViewHolder extends RecyclerView.ViewHolder {
         ImageView img;
-        TextView site,export,merge,delete;
+        TextView site, export, merge, delete;
+        RelativeLayout rlArrow;
         RecyclerView rv_member;
-         RvMemberAdapter mRvMemberAdapter;
-         List<FloorModel> floorList=new ArrayList<>();
+        RvMemberAdapter mRvMemberAdapter;
+        List<FloorModel> floorList = new ArrayList<>();
+
         public MyViewHolder(View view) {
             super(view);
+            rlArrow=view.findViewById(R.id.group_arrow);
             img = view.findViewById(R.id.group_img);
-            site=view.findViewById(R.id.group_site);
-            export=view.findViewById(R.id.group_export);
-            merge=view.findViewById(R.id.group_merge);
-            delete=view.findViewById(R.id.group_delete);
-            rv_member=view.findViewById(R.id.rv_member);
+            site = view.findViewById(R.id.group_site);
+            export = view.findViewById(R.id.group_export);
+            merge = view.findViewById(R.id.group_merge);
+            delete = view.findViewById(R.id.group_delete);
+            rv_member = view.findViewById(R.id.rv_member);
             rv_member.setLayoutManager(new LinearLayoutManager(mContext));
-            mRvMemberAdapter=new RvMemberAdapter(floorList,mContext);
+            mRvMemberAdapter = new RvMemberAdapter(floorList, mContext);
             rv_member.setAdapter(mRvMemberAdapter);
         }
     }
-    public interface OnGroupItemClickListener{
-        void groupClick(String siteName,int type);
+
+    public interface OnGroupItemClickListener {
+        void groupClick(String siteName, int type);
     }
 
 }

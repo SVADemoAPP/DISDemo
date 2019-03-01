@@ -46,11 +46,8 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
 
     private RecyclerView mRecyclerView;
     private LinearLayout mllTop;
-
     private RvGroupAdapter mRvGroupAdapter;
     private List<SiteModel> siteList = new ArrayList<>();
-    private SuperPopupWindow mSearchWindow;
-
     private RecyclerView mSearchRv;
     private RvSearchAdapter mRvSearchAdaper;
     private List<String> mSearchList = new ArrayList<>();
@@ -326,10 +323,10 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 .setOnMenuItemClickListener(new TopRightMenu.OnMenuItemClickListener() {
                     @Override
                     public void onMenuItemClick(int position) {
-                        switch (position)
-                        {
+                        switch (position) {
                             case 0: //蓝牙目录
                                 Toast.makeText(mContext, "蓝牙" + position, Toast.LENGTH_SHORT).show();
+                                
                                 break;
                             case 1: //其他目录
                                 Toast.makeText(mContext, "其他" + position, Toast.LENGTH_SHORT).show();
@@ -339,5 +336,10 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                     }
                 });
 
+    }
+
+    private void openZxing() {
+        Intent intent = new Intent();
+        startActivity(intent.setClass(this, PortraitZxingActivity.class));
     }
 }
