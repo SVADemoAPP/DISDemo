@@ -40,7 +40,7 @@ public class RvMemberAdapter extends RecyclerView.Adapter<RvMemberAdapter.MyView
     public void onBindViewHolder(MyViewHolder holder, final int position) {
         holder.itemView.setTag(position);
         holder.tv1.setText(floorList.get(position).floorName);
-        holder.tv1.setOnClickListener(new View.OnClickListener() {
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onMemberItemClickListener.memberClick(floorList.get(position).floorMap,0);
@@ -58,7 +58,7 @@ public class RvMemberAdapter extends RecyclerView.Adapter<RvMemberAdapter.MyView
         TextView tv1;
         public MyViewHolder(View view) {
             super(view);
-            tv1=view.findViewById(R.id.member_tv1);
+            tv1 = view.findViewById(R.id.member_tv1);
         }
     }
 

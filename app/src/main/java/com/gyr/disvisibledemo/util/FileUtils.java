@@ -9,7 +9,7 @@ import java.io.InputStream;
  * Created by chinasoft_gyr on 2018/11/8.
  */
 
-public class FileUtil {
+public class FileUtils {
 
     public static void writeBytesToFile(InputStream is, File file) throws IOException {
         FileOutputStream fos = null;
@@ -27,5 +27,22 @@ public class FileUtil {
                 fos.close();
             }
         }
+    }
+
+    public static boolean deleteDir(File  dir) {
+        if(!dir.exists()){
+            return false;
+        }
+        if (dir.isDirectory()) {
+            String[] children = dir.list();
+            for (int i=0; i<children.length; i++) {
+                boolean success = deleteDir(new File(dir, children[i]));
+                if (!success) {
+                    return false;
+                }
+            }
+        }
+        // 目录此时为空，可以删除
+        return dir.delete();
     }
 }

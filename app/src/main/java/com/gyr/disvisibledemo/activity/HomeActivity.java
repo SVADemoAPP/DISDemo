@@ -3,19 +3,17 @@ package com.gyr.disvisibledemo.activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.graphics.Paint;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
-import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.gyr.disvisibledemo.R;
 import com.gyr.disvisibledemo.adapter.RvGroupAdapter;
@@ -25,9 +23,10 @@ import com.gyr.disvisibledemo.bean.FloorModel;
 import com.gyr.disvisibledemo.bean.SiteModel;
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
 import com.gyr.disvisibledemo.framework.sharef.SharedPrefHelper;
-import com.gyr.disvisibledemo.util.BlueUntil;
+import com.gyr.disvisibledemo.util.BlueUntils;
 import com.gyr.disvisibledemo.util.Constant;
-import com.gyr.disvisibledemo.util.FileUtil;
+import com.gyr.disvisibledemo.util.FileUtils;
+import com.gyr.disvisibledemo.util.ZipUtils;
 import com.gyr.disvisibledemo.view.popup.SuperPopupWindow;
 
 import org.xutils.view.annotation.Event;
@@ -66,22 +65,22 @@ public class HomeActivity extends BaseActivity {
     }
 
     private void initFloorMapsDir(){
-        File dir = new File(Constant.sdPath + "/maps/");
+        File dir = new File(Constant.SD_PATH + "/maps/");
         if (!dir.exists()) {
             dir.mkdirs();
         }
-        File photosDir = new File(Constant.sdPath + "/photos/");
+        File photosDir = new File(Constant.SD_PATH + "/photos/");
         if (!photosDir.exists()) {
             photosDir.mkdirs();
         }
         if(SharedPrefHelper.getBoolean(this,"isFirst",true)) {
             SharedPrefHelper.putBoolean(this,"isFirst",false);
             for(int i=0;i<5;i++){
-                File mapFile = new File(Constant.sdPath + "/maps/floor_"+i+".png");
+                File mapFile = new File(Constant.SD_PATH + "/maps/floor_"+i+".png");
                 if (!mapFile.exists()) {
                     try {
                         mapFile.createNewFile();
-                        FileUtil.writeBytesToFile(this.getAssets().open("floor_"+i+".png"), mapFile);
+                        FileUtils.writeBytesToFile(this.getAssets().open("floor_"+i+".png"), mapFile);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -201,18 +200,31 @@ public class HomeActivity extends BaseActivity {
     private RvGroupAdapter.OnGroupItemClickListener onGroupItemClickListener = new RvGroupAdapter.OnGroupItemClickListener() {
         @Override
         public void groupClick(String siteName, int type) {
-            if (type == 0){
-                BluetoothAdapter mAdapter = BlueUntil.getBluetoothAdapter();
-                if(mAdapter == null){
-                    showToast("本机没有找到蓝牙硬件，无法使用蓝牙功能！");
-                }
-                if(!mAdapter.isEnabled()){
-                    //弹出对话框提示用户是后打开
-                    Intent enabler = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                    startActivityForResult(enabler,0);
-                    //不做提示，强行打开，此方法需要权限<uses-permissionandroid:name="android.permission.BLUETOOTH_ADMIN" />
-                    // mAdapter.enable();
-                }
+            switch (type){
+                case 0:
+                    if(!BlueUntils.isBluetoothAvaliable()){
+                        showToast("本机没有找到蓝牙硬件，无法使用蓝牙功能！");
+                    }
+                    BluetoothAdapter mAdapter = BlueUntils.getBluetoothAdapter();
+
+                    if(!mAdapter.isEnabled()){
+                        //弹出对话框提示用户是后打开
+                        Intent enabler = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                        enabler.putExtra("siteName",siteName);
+                        startActivityForResult(enabler,0);
+                        //不做提示，强行打开，此方法需要权限<uses-permissionandroid:name="android.permission.BLUETOOTH_ADMIN" />
+                        // mAdapter.enable();
+                    }else{
+                        shareFile(siteName);
+                    }
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    break;
+                default:
+                    showToast("未知的点击操作" + type);
+                    break;
             }
         }
     };
@@ -221,9 +233,8 @@ public class HomeActivity extends BaseActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data){
         super.onActivityResult(requestCode,resultCode,data);
         if(requestCode == 0){
-            if(resultCode == RESULT_OK){
-                showToast("OK!");
-            }
+            String siteName = data.getStringExtra("siteName");
+            shareFile(siteName);
         }
 
     }
@@ -237,6 +248,27 @@ public class HomeActivity extends BaseActivity {
             default:
                 break;
         }
+    }
+
+    private void shareFile(String siteName){
+
+        String basePath = Constant.SD_PATH + File.separator + "data" + File.separator;
+        String path = basePath + siteName + ".zip";
+        try {
+            ZipUtils.zipDirectory(basePath+siteName);
+        }catch (IOException e){
+            showToast("文件压缩失败");
+        }
+
+        //调用android分享窗口
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("*/*");
+        intent.setPackage("com.android.bluetooth");
+        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(path)));//path为文件的路径
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Intent chooser = Intent.createChooser(intent, "Share app");
+        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(chooser);
     }
 
     @Event(type = View.OnLongClickListener.class,value = {})

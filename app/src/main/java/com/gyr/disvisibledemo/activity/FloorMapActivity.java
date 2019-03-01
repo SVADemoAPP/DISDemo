@@ -53,7 +53,7 @@ public class FloorMapActivity extends BaseActivity {
     public void dealLogicBeforeInitView() {
         mFloorMap= (String) getIntent().getExtras().get("floormap");
         char num=mFloorMap.charAt(mFloorMap.length()-1);
-        Bitmap bitmap = BitmapFactory.decodeFile(Constant.sdPath + "/maps/floor_" + num+".png");
+        Bitmap bitmap = BitmapFactory.decodeFile(Constant.SD_PATH + "/maps/floor_" + num+".png");
         mWidth=bitmap.getWidth();
         mHeight=bitmap.getHeight();
         map.setMapBitmap(bitmap);
@@ -108,7 +108,7 @@ public class FloorMapActivity extends BaseActivity {
     private void openSysCamera(String photoName) {
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(
-                new File(Constant.sdPath+"/photos", photoName)));
+                new File(Constant.SD_PATH +"/photos", photoName)));
         startActivityForResult(cameraIntent, CODE_OPEN_CAMERA);
     }
     @Override
@@ -189,7 +189,7 @@ public class FloorMapActivity extends BaseActivity {
         switch (requestCode){
             case CODE_OPEN_CAMERA:
                 if(resultCode==-1) {
-                    showToast("拍照保存到：" + Constant.sdPath + "/photos/" + mNowSelectPrru.getTag() + ".png");
+                    showToast("拍照保存到：" + Constant.SD_PATH + "/photos/" + mNowSelectPrru.getTag() + ".png");
                 }else{
                     showToast("拍照取消了");
                 }

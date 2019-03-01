@@ -1,11 +1,8 @@
 package com.gyr.disvisibledemo.adapter;
 
 import android.app.AlertDialog;
-import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -16,15 +13,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.gyr.disvisibledemo.R;
-import com.gyr.disvisibledemo.activity.HomeActivity;
 import com.gyr.disvisibledemo.bean.FloorModel;
 import com.gyr.disvisibledemo.bean.SiteModel;
-import com.gyr.disvisibledemo.util.BlueUntil;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static android.support.v4.app.ActivityCompat.startActivityForResult;
 
 public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHolder>{
 
