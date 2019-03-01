@@ -1,80 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/home_text_color"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-    <ImageView
-        android:id="@+id/group_img"
-        android:layout_width="35dp"
-        android:layout_height="35dp"
-        android:gravity="center"
-        android:layout_marginLeft="10dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@id/group_site"
-        android:src="@mipmap/group_arrow_down"
-        android:scaleType="centerInside"/>
-    <TextView
-        android:id="@+id/group_site"
-        android:layout_width="0dp"
-        android:layout_height="35dp"
-        android:gravity="center"
-        android:textSize="14sp"
-        android:textColor="@color/group_text_color"
-        app:layout_constraintHorizontal_weight="3"
-        app:layout_constraintLeft_toRightOf="@id/group_img"
-        app:layout_constraintRight_toLeftOf="@id/group_export"
-        android:text="站点"/>
-    <TextView
-        android:textSize="14sp"
-        android:drawableLeft="@mipmap/group_export"
-        android:textColor="@color/group_text_color"
-        android:id="@+id/group_export"
-        android:layout_width="wrap_content"
-        android:layout_height="35dp"
-        android:gravity="center"
-        app:layout_constraintLeft_toRightOf="@id/group_site"
-        app:layout_constraintRight_toLeftOf="@id/group_merge"
-        android:text="导出"/>
-    <TextView
-        android:layout_marginLeft="10dp"
-        android:textSize="14sp"
-        android:drawableLeft="@mipmap/group_merge"
-        android:textColor="@color/group_text_color"
-        android:id="@+id/group_merge"
-        android:layout_width="wrap_content"
-        android:layout_height="35dp"
-        android:gravity="center"
-        app:layout_constraintLeft_toRightOf="@id/group_export"
-        app:layout_constraintRight_toLeftOf="@id/group_delete"
-        android:text="合并"/>
-    <TextView
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="5dp"
-        android:textSize="14sp"
-        android:drawableLeft="@mipmap/group_delete"
-        android:textColor="@color/group_text_color"
-        android:id="@+id/group_delete"
-        android:orientation="horizontal"
-        android:layout_width="wrap_content"
-        android:layout_height="35dp"
-        android:text="删除"
-        android:gravity="center"
-        app:layout_constraintLeft_toRightOf="@id/group_merge"
-        app:layout_constraintRight_toRightOf="parent" >
-
-    </TextView>
-    <View
-        android:id="@+id/v_stroken"
-        app:layout_constraintTop_toBottomOf="@id/group_img"
+    android:background="@color/white"
+    android:orientation="vertical">
+    <!--parent-->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:background="@color/group_text_color"
-        android:layout_height="2px"/>
+        android:layout_height="42dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/group_site"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="33dp"
+            android:gravity="center"
+            android:text="站点"
+            android:textColor="@color/level1"
+            android:textSize="16dp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/group_export"
+                android:layout_width="wrap_content"
+                android:layout_height="25dp"
+                android:drawableLeft="@mipmap/group_export"
+                android:gravity="center"
+                android:text="导出"
+                android:textColor="@color/black"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/group_merge"
+                android:layout_width="wrap_content"
+                android:layout_height="25dp"
+                android:layout_marginLeft="17dp"
+                android:drawableLeft="@mipmap/group_merge"
+                android:gravity="center"
+                android:text="合并"
+                android:textColor="@color/black"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/group_delete"
+                android:layout_width="wrap_content"
+                android:layout_height="25dp"
+                android:layout_marginLeft="17dp"
+                android:layout_marginRight="17dp"
+                android:drawableLeft="@mipmap/group_delete"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:text="删除"
+                android:textColor="@color/black"
+                android:textSize="13sp" />
+
+            <ImageView
+                android:id="@+id/group_img"
+                android:layout_width="15dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginRight="17dp"
+                android:gravity="center"
+                android:scaleType="centerInside"
+                android:src="@mipmap/group_arrow_down" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:background="@color/line_bg" />
+
     <android.support.v7.widget.RecyclerView
         android:id="@+id/rv_member"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/v_stroken">
+        android:layout_height="wrap_content">
 
     </android.support.v7.widget.RecyclerView>
-</android.support.constraint.ConstraintLayout>
+</LinearLayout>

@@ -1,34 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="42dp"
     android:background="@android:color/white"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-    <TextView
-        android:textSize="14sp"
-        android:textColor="@color/home_text_color"
-        android:id="@+id/member_tv1"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"
-        android:layout_width="match_parent"
-        android:layout_height="30dp"
-        android:gravity="center"
-        app:layout_constraintHorizontal_weight="1"
-        android:text="member1"/>
-    <View
-        android:id="@+id/v_stroken"
-        app:layout_constraintTop_toBottomOf="@id/group_img"
-        android:layout_width="match_parent"
-        android:background="@color/home_text_color"
-        android:layout_height="2px"/>
-<!--    <LinearLayout
-        android:id="@+id/member_ll"
-        android:orientation="horizontal"
-        android:layout_width="0dp"
-        android:layout_height="30dp"
-        app:layout_constraintHorizontal_weight="2"
-        app:layout_constraintLeft_toRightOf="@id/member_tv2"
-        app:layout_constraintRight_toRightOf="parent" >
+    android:orientation="vertical">
 
-    </LinearLayout>-->
-</android.support.constraint.ConstraintLayout>
+    <TextView
+        android:id="@+id/member_tv1"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginLeft="33dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:text="member1"
+        android:textColor="@color/search_pop_text"
+        android:textSize="15dp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:background="@color/line_bg" />
+
+</LinearLayout>

@@ -1,6 +1,7 @@
 package com.gyr.disvisibledemo.framework.activity;
 
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -13,18 +14,19 @@ import android.view.WindowManager.BadTokenException;
 import android.widget.Toast;
 
 
-public abstract class BaseActivity extends FragmentActivity {
+public abstract class BaseActivity extends Activity {
     private ProgressDialog progressDialog;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentLayout();
+        findView();
         dealLogicBeforeInitView();
         initView();
         dealLogicAfterInitView();
     }
 
-
+    public abstract void findView();
     /**
      * 设置布局，在onCreate()生命周期中回调
      */
