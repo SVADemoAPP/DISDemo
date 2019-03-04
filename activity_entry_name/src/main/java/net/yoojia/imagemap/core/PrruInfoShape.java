@@ -11,7 +11,7 @@ import net.yoojia.imagemap.R;
 import net.yoojia.imagemap.support.ScaleUtility;
 import net.yoojia.imagemap.util.MatrixConverHelper;
 
-public class pRRUInfoShape extends Shape {
+public class PrruInfoShape extends Shape {
     private static /* synthetic */ int[] $SWITCH_TABLE$net$yoojia$imagemap$core$pRRUInfoShape$pRRUType;
     private Bitmap bmp_inArea;
     private Bitmap bmp_outArea;
@@ -75,7 +75,7 @@ public class pRRUInfoShape extends Shape {
         return this.id;
     }
 
-    public pRRUInfoShape(Object tag, int coverColor, Context context) {
+    public PrruInfoShape(Object tag, int coverColor, Context context) {
         super(tag, coverColor);
         this.context = context;
         this.tag = tag;

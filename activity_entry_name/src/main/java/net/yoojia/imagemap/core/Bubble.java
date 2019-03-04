@@ -61,7 +61,7 @@ public class Bubble extends FrameLayout {
         } else {
             push_msg = false;
         }
-        if (shape instanceof pRRUInfoShape) { //判断是bubble是依赖于prru的时候进行位置调整
+        if (shape instanceof PrruInfoShape) { //判断是bubble是依赖于prru的时候进行位置调整
             PointF centerPoint = shape.getCenterPoint();
             setBubbleViewAtPosition(centerPoint.x+30,centerPoint.y-200);
         }else {

@@ -45,4 +45,13 @@ public class FileUtils {
         // 目录此时为空，可以删除
         return dir.delete();
     }
+
+    public static boolean isZipFile(String path){
+        File file = new File(path);
+        if(file.exists() && file.getName().toLowerCase().contains(".zip")){
+            return true;
+        }
+        return false;
+
+    }
 }

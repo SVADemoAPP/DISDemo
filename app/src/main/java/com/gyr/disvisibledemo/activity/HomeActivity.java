@@ -26,12 +26,11 @@ import com.gyr.disvisibledemo.adapter.RvSearchAdapter;
 import com.gyr.disvisibledemo.bean.FloorModel;
 import com.gyr.disvisibledemo.bean.SiteModel;
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
-import com.gyr.disvisibledemo.framework.sharef.SharedPrefHelper;
 import com.gyr.disvisibledemo.util.BlueUntils;
 import com.gyr.disvisibledemo.util.Constant;
 import com.gyr.disvisibledemo.util.FileUtils;
 import com.gyr.disvisibledemo.util.ZipUtils;
-import com.gyr.disvisibledemo.view.popup.SuperPopupWindow;
+import com.leon.lfilepickerlibrary.LFilePicker;
 import com.zaaach.toprightmenu.MenuItem;
 import com.zaaach.toprightmenu.TopRightMenu;
 
@@ -41,7 +40,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class HomeActivity extends BaseActivity implements View.OnClickListener {
@@ -160,12 +158,12 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                     if(subFiles.isFile() && Constant.IMGFILE.contains(fileType)){
                         FloorModel floorModel = new FloorModel();
                         floorModel.floorName = subFiles.getName().substring(0,subFiles.getName().lastIndexOf("."));
-                        floorModel.floorMap = floorModel.floorName;
+                        floorModel.floorMap = file.getName() + File.separator + subFiles.getName();
                         siteModel.floorModelList.add(floorModel);
                     }
 
                 }
-
+                siteList.add(siteModel);
             }
 
         }
@@ -262,21 +260,27 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 String path = data.getStringExtra("path"); //获取返回文件夹路径
                 ArrayList<String> paths = data.getStringArrayListExtra("paths"); //获取返回文件路径 （可以有多个）
                 Log.e("TAG", "path=" + paths.get(0));
+                String filePath = paths.get(0);
+                if(FileUtils.isZipFile(filePath)){
+                    ZipUtils.unzip(Constant.DATA_PATH,filePath);
+                    //TODO 刷新主界面
+                }else {
+                    Toast.makeText(mContext, "选择的文件不正确", Toast.LENGTH_SHORT).show();
+                }
+
             }
         }
     }
 
     private void shareFile(String siteName){
 
-        String basePath = Constant.SD_PATH + File.separator + "data" + File.separator;
+        String basePath = Constant.DATA_PATH + File.separator;
         String path = basePath + siteName + ".zip";
         try {
             ZipUtils.zipDirectory(basePath+siteName);
         }catch (IOException e){
             showToast("文件压缩失败");
         }
-
-
 
         //调用android分享窗口
         Intent intent = new Intent(Intent.ACTION_SEND);
@@ -455,7 +459,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 .withMutilyMode(false)  //false 为单选 true为多选
                 .withIsGreater(false)
                 .withFileSize(500 * 1024)   //文件大小过滤器
-                .withFileFilter(new String[]{".txt", ".png", ".zip"})  //文件类型过滤器 只保留写入文件类型
+                .withFileFilter(new String[]{".zip"})  //文件类型过滤器 只保留写入文件类型
                 .start();
     }
 

@@ -1,5 +1,7 @@
 package com.gyr.disvisibledemo.util;
 
+import android.util.Log;
+
 import com.gyr.disvisibledemo.framework.utils.StringUtil;
 
 import java.io.File;
@@ -68,16 +70,21 @@ public class ZipUtils {
      * @param unzip
      * @throws IOException
      */
-    public static void unzip(String basePath,String unzip) throws IOException {
+    public static void unzip(String basePath,String unzip) {
         File file = new File(unzip);
         //如果没有传解压目标目录，则默认为文件所在目录
         if(StringUtil.isNullOrEmpty(basePath)){
             basePath = file.getParent();
         }
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            ZipInputStream zis = new ZipInputStream(fis);
+            unzip(basePath,zis);
+        }catch (IOException e){
+            Log.e("解压文件出错", "文件：" + unzip);
+        }
 
-        FileInputStream fis = new FileInputStream(file);
-        ZipInputStream zis = new ZipInputStream(fis);
-        unzip(basePath,zis);
+
     }
 
     private static void unzip(String basePath,ZipInputStream zis) throws IOException {

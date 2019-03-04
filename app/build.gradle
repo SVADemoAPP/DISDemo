@@ -31,7 +31,6 @@ dependencies {
     implementation 'com.journeyapps:zxing-android-embedded:3.5.0'
     implementation files('libs/dom4j-2.0.2.jar')
     implementation project(':toprightmenu')
-    compile project(path: ':toprightmenu')  //右上角浮窗按钮
-    compile project(path: ':lfilepickerlibrary')  //文件选择器
+    implementation project(path: ':lfilepickerlibrary')  //文件选择器
 
 }
