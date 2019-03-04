@@ -1,1 +1,1 @@
-include ':app', ':activity_entry_name'
+include ':app', ':activity_entry_name', ':toprightmenu'

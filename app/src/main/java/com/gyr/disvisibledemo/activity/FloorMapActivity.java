@@ -43,6 +43,12 @@ public class FloorMapActivity extends BaseActivity {
     private TextView menu_bind,menu_move,menu_camera;
     private pRRUInfoShape mNowSelectPrru;
     private final int CODE_OPEN_CAMERA=1;
+
+    @Override
+    public void findView() {
+
+    }
+
     @Override
     public void setContentLayout() {
         setContentView(R.layout.activity_floor_map);
