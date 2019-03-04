@@ -326,7 +326,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                         switch (position) {
                             case 0: //蓝牙目录
                                 Toast.makeText(mContext, "蓝牙" + position, Toast.LENGTH_SHORT).show();
-                                
+
                                 break;
                             case 1: //其他目录
                                 Toast.makeText(mContext, "其他" + position, Toast.LENGTH_SHORT).show();
