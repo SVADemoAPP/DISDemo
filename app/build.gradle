@@ -27,8 +27,9 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'org.xutils:xutils:3.3.36'
     implementation 'com.android.support:recyclerview-v7:28.0.0'
-    implementation project(':activity_entry_name')
+    implementation project(':activity_entry_name') //地图
     implementation 'com.journeyapps:zxing-android-embedded:3.5.0'
-    compile project(path: ':toprightmenu')
+    compile project(path: ':toprightmenu')  //右上角浮窗按钮
+    compile project(path: ':lfilepickerlibrary')  //文件选择器
 
 }
