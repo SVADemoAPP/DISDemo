@@ -10,6 +10,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -44,14 +45,14 @@ import java.util.Collections;
 import java.util.List;
 
 public class HomeActivity extends BaseActivity implements View.OnClickListener {
-
+    private static final int REQUESTCODE_FROM_ACTIVITY = 1000;  //选择文件返回code
+    private static final String DIRECTION_BLUETOOTH_0 = "/storage/emulated/0/Bluetooth/"; //蓝牙路径1  路径不区分大小写
+    private static final String DIRECTION_BLUETOOTH_1 = "/storage/emulated/0/Download/Bluetooth/"; //蓝牙路径2
+    private static final String DIRECTION_ROOT = "/storage/emulated/0/"; //文件根目录
     private RecyclerView mRecyclerView;
     private LinearLayout mllTop;
-
     private RvGroupAdapter mRvGroupAdapter;
     private List<SiteModel> siteList = new ArrayList<>();
-    private SuperPopupWindow mSearchWindow;
-
     private RecyclerView mSearchRv;
     private RvSearchAdapter mRvSearchAdaper;
     private List<String> mSearchList = new ArrayList<>();
@@ -197,12 +198,10 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     private RvMemberAdapter.OnMemberItemClickListener onMemberItemClickListener = new RvMemberAdapter.OnMemberItemClickListener() {
         @Override
         public void memberClick(String floorMap, int type) {
-//            showToast(floorMap);
+            Log.e("XHF","floorMap="+floorMap+" , type="+type);
             Bundle bundle = new Bundle();
             bundle.putString("floormap", floorMap);
             openActivity(FloorMapActivity.class, bundle);
-//
-//            String ss= (String) HomeActivity.this.getIntent().getExtras().get("map");
         }
     };
 
@@ -258,7 +257,13 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
             String siteName = data.getStringExtra("siteName");
             shareFile(siteName);
         }
-
+        if (resultCode == RESULT_OK) {
+            if (requestCode == REQUESTCODE_FROM_ACTIVITY) {
+                String path = data.getStringExtra("path"); //获取返回文件夹路径
+                ArrayList<String> paths = data.getStringArrayListExtra("paths"); //获取返回文件路径 （可以有多个）
+                Log.e("TAG", "path=" + paths.get(0));
+            }
+        }
     }
 
     private void shareFile(String siteName){
@@ -270,6 +275,8 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         }catch (IOException e){
             showToast("文件压缩失败");
         }
+
+
 
         //调用android分享窗口
         Intent intent = new Intent(Intent.ACTION_SEND);
@@ -370,13 +377,43 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 .setOnMenuItemClickListener(new TopRightMenu.OnMenuItemClickListener() {
                     @Override
                     public void onMenuItemClick(int position) {
-                        switch (position)
-                        {
+                        switch (position) {
                             case 0: //蓝牙目录
-                                Toast.makeText(mContext, "蓝牙" + position, Toast.LENGTH_SHORT).show();
+                                new Thread(new Runnable() {  //延迟执行 避免卡住UI
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            Thread.sleep(150);
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    openBlueToothFileSelector();//打开蓝牙目录
+                                                }
+                                            });
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }).start();
+
                                 break;
                             case 1: //其他目录
-                                Toast.makeText(mContext, "其他" + position, Toast.LENGTH_SHORT).show();
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            Thread.sleep(150);
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    openFileSelector(DIRECTION_ROOT,"文件选择"); //打开文件根目录
+                                                }
+                                            });
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }).start();
                                 break;
                         }
 
@@ -384,4 +421,43 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 });
 
     }
+
+    /***
+     * 打开蓝牙文件目录
+     */
+    private void openBlueToothFileSelector() {
+        File file = new File(DIRECTION_BLUETOOTH_0);
+        if (file.exists()) //判断文件目录是否存在
+        {
+            openFileSelector(DIRECTION_BLUETOOTH_0,"蓝牙目录"); //存在打开
+            return;
+        }
+        File file2 = new File(DIRECTION_BLUETOOTH_1);
+        if (file2.exists()) {
+            openFileSelector(DIRECTION_BLUETOOTH_1,"蓝牙目录"); //存在打开
+            return;
+        }
+        Toast.makeText(mContext, "该没有蓝牙目录，请选择其他目录", Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * 打开文件路径选择器
+     *
+     * @param direction 文件路径
+     * @param name title名称
+     */
+    private void openFileSelector(String direction,String name) {
+        new LFilePicker()
+                .withTitle(name)
+                .withActivity((Activity) mContext)
+                .withRequestCode(REQUESTCODE_FROM_ACTIVITY)
+                .withStartPath(direction)//打开文件初始路径
+                .withMutilyMode(false)  //false 为单选 true为多选
+                .withIsGreater(false)
+                .withFileSize(500 * 1024)   //文件大小过滤器
+                .withFileFilter(new String[]{".txt", ".png", ".zip"})  //文件类型过滤器 只保留写入文件类型
+                .start();
+    }
+
+
 }

@@ -1,1 +1,1 @@
-include ':app', ':activity_entry_name', ':toprightmenu'
+include ':app', ':activity_entry_name', ':toprightmenu', ':lfilepickerlibrary'
