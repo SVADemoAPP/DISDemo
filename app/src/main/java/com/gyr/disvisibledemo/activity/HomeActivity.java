@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -12,12 +11,12 @@ import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.gyr.disvisibledemo.R;
 import com.gyr.disvisibledemo.adapter.RvGroupAdapter;
@@ -35,12 +34,13 @@ import com.gyr.disvisibledemo.view.popup.SuperPopupWindow;
 import com.zaaach.toprightmenu.MenuItem;
 import com.zaaach.toprightmenu.TopRightMenu;
 
-import org.xutils.view.annotation.Event;
 import org.xutils.x;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class HomeActivity extends BaseActivity implements View.OnClickListener {
@@ -122,7 +122,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
 
 
     private void initFloorMapsDir() {
-        File dir = new File(Constant.SD_PATH + "/maps/");
+        File dir = new File(Constant.SD_PATH + "/data/");
         if (!dir.exists()) {
             dir.mkdirs();
         }
@@ -130,10 +130,10 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         if (!photosDir.exists()) {
             photosDir.mkdirs();
         }
-        if(SharedPrefHelper.getBoolean(this,"isFirst",true)) {
-            SharedPrefHelper.putBoolean(this,"isFirst",false);
-            for(int i=0;i<5;i++){
-                File mapFile = new File(Constant.SD_PATH + "/maps/floor_"+i+".png");
+        /*if (SharedPrefHelper.getBoolean(this, "isFirst", true)) {
+            SharedPrefHelper.putBoolean(this, "isFirst", false);
+            for (int i = 0; i < 5; i++) {
+                File mapFile = new File(Constant.SD_PATH + "/maps/floor_" + i + ".png");
                 if (!mapFile.exists()) {
                     try {
                         mapFile.createNewFile();
@@ -144,20 +144,29 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 }
             }
 
-        }
+        }*/
     }
 
     private void initSiteAndFloor() {
-        for (int i = 1; i < 6; i++) {
-            SiteModel siteModel = new SiteModel();
-            siteModel.siteName = "U" + i;
-            for (int j = 1; j < 5; j++) {
-                FloorModel floorModel = new FloorModel();
-                floorModel.floorName = "F" + "_" + j;
-                floorModel.floorMap = "map" + i + "_" + j;
-                siteModel.floorModelList.add(floorModel);
+        File dataFile = new File(Constant.DATA_PATH);
+        List<File> fileList  = Arrays.asList(dataFile.listFiles());
+        for (File file  : fileList){
+            if(!file.isFile()){
+                SiteModel siteModel = new SiteModel();
+                siteModel.siteName = file.getName();
+                for(File subFiles : Arrays.asList(file.listFiles())){
+                    String fileType = subFiles.getName().toUpperCase().substring(subFiles.getName().lastIndexOf("."));
+                    if(subFiles.isFile() && Constant.IMGFILE.contains(fileType)){
+                        FloorModel floorModel = new FloorModel();
+                        floorModel.floorName = subFiles.getName().substring(0,subFiles.getName().lastIndexOf("."));
+                        floorModel.floorMap = floorModel.floorName;
+                        siteModel.floorModelList.add(floorModel);
+                    }
+
+                }
+
             }
-            siteList.add(siteModel);
+
         }
     }
 
@@ -189,36 +198,24 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         @Override
         public void memberClick(String floorMap, int type) {
 //            showToast(floorMap);
-            Bundle bundle=new Bundle();
-            bundle.putString("floormap",floorMap);
-            openActivity(FloorMapActivity.class,bundle);
+            Bundle bundle = new Bundle();
+            bundle.putString("floormap", floorMap);
+            openActivity(FloorMapActivity.class, bundle);
 //
 //            String ss= (String) HomeActivity.this.getIntent().getExtras().get("map");
         }
     };
 
-    private void showSearchPop() {
-
-        if (mSearchWindow == null) {
-            mSearchWindow = new SuperPopupWindow(this, R.layout.popup_search_layout, new SuperPopupWindow.ViewListener() {
-                @Override
-                public void getViewOfPop(View view) {
-                    search_rv=view.findViewById(R.id.search_rv);
-                    search_rv.setLayoutManager(new LinearLayoutManager(HomeActivity.this));
-                    mRvSearchAdaper=new RvSearchAdapter(mSearchList,HomeActivity.this);
-                    mRvSearchAdaper.setOnSearchItemClickListener(new RvSearchAdapter.OnSearchItemClickListener() {
-                        @Override
-                        public void searchClick(String str) {
-                            showToast("搜索单击回调："+str);
-                        }
-                    });
-                    search_rv.setAdapter(mRvSearchAdaper);
-                }
-            });
-            mSearchWindow.setWidthAndHeight(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
-            mSearchWindow.setOutsideTouchable(false);
-        }
-        mSearchWindow.showPopupWindowAsDropDown(ll_top);
+    private void initSearchPop() {
+        mSearchRv.setLayoutManager(new LinearLayoutManager(HomeActivity.this));
+        mRvSearchAdaper = new RvSearchAdapter(mSearchList, HomeActivity.this);
+        mRvSearchAdaper.setOnSearchItemClickListener(new RvSearchAdapter.OnSearchItemClickListener() {
+            @Override
+            public void searchClick(String str) {
+                showToast("搜索单击回调：" + str);
+            }
+        });
+        mSearchRv.setAdapter(mRvSearchAdaper);
     }
 
     private RvGroupAdapter.OnGroupItemClickListener onGroupItemClickListener = new RvGroupAdapter.OnGroupItemClickListener() {
@@ -236,8 +233,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                         Intent enabler = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                         enabler.putExtra("siteName",siteName);
                         startActivityForResult(enabler,0);
-                        //不做提示，强行打开，此方法需要权限<uses-permissionandroid:name="android.permission.BLUETOOTH_ADMIN" />
-                        // mAdapter.enable();
                     }else{
                         shareFile(siteName);
                     }
@@ -245,6 +240,8 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 case 1:
                     break;
                 case 2:
+                    String path = Constant.DATA_PATH + File.separator + siteName;
+                    FileUtils.deleteDir(new File(path));
                     break;
                 default:
                     showToast("未知的点击操作" + type);
@@ -252,6 +249,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
             }
         }
     };
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data){

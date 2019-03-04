@@ -91,12 +91,10 @@ public class FloorMapActivity extends BaseActivity {
                             mNowSelectPrru.setBind(false);
                             mNowSelectPrru.setPrruShowType(pRRUInfoShape.pRRUType.outArea);
                         }else{
-                            mNowSelectPrru.setBind(true);
-                            mNowSelectPrru.setPrruShowType(pRRUInfoShape.pRRUType.inArea);
+                            IntentIntegrator integrator = new IntentIntegrator(FloorMapActivity.this);
+                            integrator.initiateScan();
                         }
                     }
-                    IntentIntegrator integrator = new IntentIntegrator(FloorMapActivity.this);
-                    integrator.initiateScan();
                     break;
                 case R.id.menu_move:
                     break;
@@ -207,6 +205,8 @@ public class FloorMapActivity extends BaseActivity {
         if (scanResult != null) {
             String result = scanResult.getContents();
             showToast("条码扫描："+result);
+            mNowSelectPrru.setBind(true);
+            mNowSelectPrru.setPrruShowType(pRRUInfoShape.pRRUType.inArea);
         }
     }
 
