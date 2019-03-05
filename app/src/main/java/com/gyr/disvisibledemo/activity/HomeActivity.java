@@ -294,10 +294,12 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 String path = data.getStringExtra("path"); //获取返回文件夹路径
                 ArrayList<String> paths = data.getStringArrayListExtra("paths"); //获取返回文件路径 （可以有多个）
                 Log.e("TAG", "path=" + paths.get(0));
-                String filePath = paths.get(0);   
+                String filePath = paths.get(0);
                 if(FileUtils.isZipFile(filePath)){
                     ZipUtils.unzip(Constant.DATA_PATH,filePath);
-                    //TODO 刷新主界面
+                    // 刷新主界面
+                    initFloorMapsDir();
+                    mRvGroupAdapter.notifyDataSetChanged();
                 }else {
                     Toast.makeText(mContext, "选择的文件不正确", Toast.LENGTH_SHORT).show();
                 }
