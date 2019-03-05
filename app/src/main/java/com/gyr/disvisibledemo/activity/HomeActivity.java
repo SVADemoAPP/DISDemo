@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
@@ -42,9 +43,9 @@ import java.util.List;
 
 public class HomeActivity extends BaseActivity implements View.OnClickListener {
     private static final int REQUESTCODE_FROM_ACTIVITY = 1000;  //选择文件返回code
-    private static final String DIRECTION_BLUETOOTH_0 = "/storage/emulated/0/Bluetooth/"; //蓝牙路径1  路径不区分大小写
-    private static final String DIRECTION_BLUETOOTH_1 = "/storage/emulated/0/Download/Bluetooth/"; //蓝牙路径2
-    private static final String DIRECTION_ROOT = "/storage/emulated/0/"; //文件根目录
+    private static final String DIRECTION_ROOT = Environment.getExternalStorageDirectory().getAbsolutePath(); //文件根目录
+    private static final String DIRECTION_BLUETOOTH_0 = DIRECTION_ROOT+File.separator+"Bluetooth/"; //蓝牙路径1  路径不区分大小写
+    private static final String DIRECTION_BLUETOOTH_1 = DIRECTION_ROOT+File.separator+"Download/Bluetooth/"; //蓝牙路径2
     private RecyclerView mRecyclerView;
     private LinearLayout mllTop;
     private RvGroupAdapter mRvGroupAdapter;
@@ -408,7 +409,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 .withMutilyMode(false)  //false 为单选 true为多选
                 .withIsGreater(false)
                 .withFileSize(500 * 1024)   //文件大小过滤器
-                .withFileFilter(new String[]{".txt", ".png", ".zip"})  //文件类型过滤器 只保留写入文件类型
+//                .withFileFilter(new String[]{".txt", ".png", ".zip"})  //文件类型过滤器 只保留写入文件类型
                 .start();
     }
 
