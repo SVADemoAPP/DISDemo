@@ -46,8 +46,7 @@ public class FileUtils {
         return dir.delete();
     }
 
-    public static boolean isZipFile(String path){
-        File file = new File(path);
+    public static boolean isZipFile(File file ){
         if(file.exists() && file.getName().toLowerCase().contains(".zip")){
             return true;
         }

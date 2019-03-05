@@ -105,24 +105,31 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         mHeight = bitmap.getHeight();
         mFloorMap.setMapBitmap(bitmap);
         Element rootElement = XmlUntils.getRootElement(Constant.DATA_PATH + File.separator + siteName + File.separator + "project.xml");
-        List<Element> floors = XmlUntils.getElementListByName(rootElement,"Floors");
-        for(Element element : floors){
+        Element floors = XmlUntils.getElementByName(rootElement,"Floors");
+        List<Element> floorList = XmlUntils.getElementListByName(floors,"Floor");
+        boolean flag = false;
+        for(Element element : floorList){
             //如果是同一楼层
-            if(floorName.equals(XmlUntils.getAttributeValueByName(element,"name"))){
-                List<Element> nes = XmlUntils.getElementListByName(element,"NE");
+            if(floorName.equals(XmlUntils.getAttributeValueByName(element,"floorCode"))){
+                List<Element> nes = XmlUntils.getElementListByName(XmlUntils.getElementByName(element,"NEs"),"NE");
                 for(Element ne : nes){
-                    PrruInfoShape PrruInfoShape = new PrruInfoShape(floorName,Color.YELLOW,this);
-                    PrruInfoShape.setId(XmlUntils.getAttributeValueByName(ne,"id"));
-                    PrruInfoShape.setValues(Float.parseFloat(XmlUntils.getAttributeValueByName(ne,"x")),Float.parseFloat(XmlUntils.getAttributeValueByName(ne,"y")));
+                    PrruInfoShape prruInfoShape = new PrruInfoShape(XmlUntils.getAttributeValueByName(ne,"id"),Color.YELLOW,this);
+                    prruInfoShape.setId(XmlUntils.getAttributeValueByName(ne,"id"));
+                    prruInfoShape.setValues(Float.parseFloat(XmlUntils.getAttributeValueByName(ne,"x")),Float.parseFloat(XmlUntils.getAttributeValueByName(ne,"y")));
                     if(StringUtil.isNullOrEmpty(XmlUntils.getAttributeValueByName(ne,"esn"))){
-                        PrruInfoShape.setBind(false);
-                        //PrruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.outArea);
+                        prruInfoShape.setBind(false);
+                        prruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.outArea);
                     }else {
-                        PrruInfoShape.setBind(true);
-                        //PrruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.inArea);
+                        prruInfoShape.setBind(true);
+                        prruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.inArea);
                     }
-                    mFloorMap.addShape(PrruInfoShape,false);
+                    mFloorMap.addShape(prruInfoShape,false);
                 }
+                flag = true;
+                break;
+            }
+
+            if(flag){
                 break;
             }
         }

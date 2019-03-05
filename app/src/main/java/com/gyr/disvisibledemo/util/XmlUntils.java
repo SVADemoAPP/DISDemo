@@ -23,6 +23,10 @@ public class XmlUntils {
         return element.elements(elementName);
     }
 
+    public static Element getElementByName(Element element,String elementName){
+        return element.element(elementName);
+    }
+
     public static String getAttributeValueByName(Element element, String attributeName){
         return element.attributeValue(attributeName);
     }

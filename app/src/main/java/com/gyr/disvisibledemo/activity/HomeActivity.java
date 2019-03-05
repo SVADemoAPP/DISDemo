@@ -153,13 +153,15 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     private void initSiteAndFloor() {
         File dataFile = new File(Constant.DATA_PATH);
         List<File> fileList = Arrays.asList(dataFile.listFiles());
+        int index;
         for (File file : fileList) {
             if (!file.isFile()) {
                 SiteModel siteModel = new SiteModel();
                 siteModel.siteName = file.getName();
                 for (File subFiles : Arrays.asList(file.listFiles())) {
-                    if (subFiles.isFile()) {
-                        String fileType = subFiles.getName().toUpperCase().substring(subFiles.getName().lastIndexOf("."));
+                    index = subFiles.getName().lastIndexOf(".");
+                    if (index > -1) {
+                        String fileType = subFiles.getName().toUpperCase().substring(index);
                         if (Constant.IMGFILE.contains(fileType)) {
                             FloorModel floorModel = new FloorModel();
                             floorModel.floorName = subFiles.getName().substring(0, subFiles.getName().lastIndexOf("."));
@@ -296,9 +298,9 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 String path = data.getStringExtra("path"); //获取返回文件夹路径
                 ArrayList<String> paths = data.getStringArrayListExtra("paths"); //获取返回文件路径 （可以有多个）
                 Log.e("TAG", "path=" + paths.get(0));
-                String filePath = paths.get(0);
-                if (FileUtils.isZipFile(filePath)) {
-                    ZipUtils.unzip(Constant.DATA_PATH, filePath);
+                File file = new File(paths.get(0));
+                if (FileUtils.isZipFile(file)) {
+                    ZipUtils.unzip(Constant.DATA_PATH + File.separator + file.getName().substring(0,file.getName().lastIndexOf(".")), file.getPath());
                     // 刷新主界面
                     initFloorMapsDir();
                     mRvGroupAdapter.notifyDataSetChanged();
