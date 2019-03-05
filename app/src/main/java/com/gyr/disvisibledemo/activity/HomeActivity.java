@@ -1,8 +1,10 @@
 package com.gyr.disvisibledemo.activity;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -154,14 +156,15 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 SiteModel siteModel = new SiteModel();
                 siteModel.siteName = file.getName();
                 for(File subFiles : Arrays.asList(file.listFiles())){
-                    String fileType = subFiles.getName().toUpperCase().substring(subFiles.getName().lastIndexOf("."));
-                    if(subFiles.isFile() && Constant.IMGFILE.contains(fileType)){
-                        FloorModel floorModel = new FloorModel();
-                        floorModel.floorName = subFiles.getName().substring(0,subFiles.getName().lastIndexOf("."));
-                        floorModel.floorMap = file.getName() + File.separator + subFiles.getName();
-                        siteModel.floorModelList.add(floorModel);
+                    if(subFiles.isFile()){
+                        String fileType = subFiles.getName().toUpperCase().substring(subFiles.getName().lastIndexOf("."));
+                        if(Constant.IMGFILE.contains(fileType)){
+                            FloorModel floorModel = new FloorModel();
+                            floorModel.floorName = subFiles.getName().substring(0,subFiles.getName().lastIndexOf("."));
+                            floorModel.floorMap = file.getName() + File.separator + subFiles.getName();
+                            siteModel.floorModelList.add(floorModel);
+                        }
                     }
-
                 }
                 siteList.add(siteModel);
             }
@@ -235,10 +238,12 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                     }
                     break;
                 case 1:
+                    showNormalDialog("合并","确定进行合并操作吗？");
                     break;
                 case 2:
                     String path = Constant.DATA_PATH + File.separator + siteName;
                     FileUtils.deleteDir(new File(path));
+                    showNormalDialog("删除","确定进行删除操作吗？");
                     break;
                 default:
                     showToast("未知的点击操作" + type);
@@ -246,6 +251,35 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
             }
         }
     };
+
+    private void showNormalDialog(String title, String message){
+        /* @setIcon 设置对话框图标
+         * @setTitle 设置对话框标题
+         * @setMessage 设置对话框消息提示
+         * setXXX方法返回Dialog对象，因此可以链式设置属性
+         */
+        final AlertDialog.Builder normalDialog =
+                new AlertDialog.Builder(mContext);
+//        normalDialog.setIcon(R.drawable.icon_dialog);
+        normalDialog.setTitle(title);
+        normalDialog.setMessage(message);
+        normalDialog.setPositiveButton("确定",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(mContext,"操作成功",Toast.LENGTH_SHORT).show();
+                    }
+                });
+        normalDialog.setNegativeButton("关闭",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //...To-do
+                    }
+                });
+        // 显示
+        normalDialog.show();
+    }
 
 
     @Override
@@ -260,7 +294,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 String path = data.getStringExtra("path"); //获取返回文件夹路径
                 ArrayList<String> paths = data.getStringArrayListExtra("paths"); //获取返回文件路径 （可以有多个）
                 Log.e("TAG", "path=" + paths.get(0));
-                String filePath = paths.get(0);
+                String filePath = paths.get(0);   
                 if(FileUtils.isZipFile(filePath)){
                     ZipUtils.unzip(Constant.DATA_PATH,filePath);
                     //TODO 刷新主界面

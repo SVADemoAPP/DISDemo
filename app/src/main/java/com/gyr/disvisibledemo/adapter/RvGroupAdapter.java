@@ -81,48 +81,19 @@ public class RvGroupAdapter extends RecyclerView.Adapter<RvGroupAdapter.MyViewHo
         holder.merge.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showNormalDialog("合并","确定需要进行合并操作吗？");
+                onGroupItemClickListener.groupClick(siteList.get(position).siteName,1);
             }
         });
         //删除按钮点击监听
         holder.delete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showNormalDialog("刪除","确定要进行删除操作吗？");
+                onGroupItemClickListener.groupClick(siteList.get(position).siteName,2);
             }
         });
     }
 
 
-    private void showNormalDialog(String title, String message){
-        /* @setIcon 设置对话框图标
-         * @setTitle 设置对话框标题
-         * @setMessage 设置对话框消息提示
-         * setXXX方法返回Dialog对象，因此可以链式设置属性
-         */
-        final AlertDialog.Builder normalDialog =
-                new AlertDialog.Builder(mContext);
-//        normalDialog.setIcon(R.drawable.icon_dialog);
-        normalDialog.setTitle(title);
-        normalDialog.setMessage(message);
-        normalDialog.setPositiveButton("确定",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        //...To-do
-                        Toast.makeText(mContext,"操作成功",Toast.LENGTH_SHORT).show();
-                    }
-                });
-        normalDialog.setNegativeButton("关闭",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        //...To-do
-                    }
-                });
-        // 显示
-        normalDialog.show();
-    }
 
     @Override
     public int getItemCount() {
