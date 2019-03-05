@@ -421,7 +421,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                     public void onMenuItemClick(int position) {
                         switch (position) {
                             case 0: //蓝牙目录
-                                scanBlueToothFile();
+//                                scanBlueToothFile();
                                 new Thread(new Runnable() {  //延迟执行 避免卡住UI
                                     @Override
                                     public void run() {
@@ -497,8 +497,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 .withStartPath(direction)//打开文件初始路径
                 .withMutilyMode(false)  //false 为单选 true为多选
                 .withIsGreater(false)
-                .withFileSize(500 * 1024)   //文件大小过滤器
-                .withFileFilter(new String[]{".zip"})  //文件类型过滤器 只保留写入文件类型
+                .withFileSize(500 * 1024*10)   //文件大小过滤器
                 .start();
     }
 
