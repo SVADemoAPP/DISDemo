@@ -8,7 +8,6 @@ import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.internal.view.SupportMenu;
 import android.util.AttributeSet;
 import com.caverock.androidsvg.SVG;
 import java.util.ArrayList;
@@ -21,10 +20,8 @@ import net.yoojia.imagemap.core.MoniPointShape;
 import net.yoojia.imagemap.core.PushMessageShape;
 import net.yoojia.imagemap.core.Shape;
 import net.yoojia.imagemap.core.ShapeExtension;
-import net.yoojia.imagemap.core.ShapeExtension.OnShapeActionListener;
 import net.yoojia.imagemap.core.SpecialShape;
-import net.yoojia.imagemap.core.pRRUInfoShape;
-import net.yoojia.imagemap.core.pRRUInfoShape.pRRUType;
+import net.yoojia.imagemap.core.PrruInfoShape;
 import net.yoojia.imagemap.util.MatrixConverHelper;
 import net.yoojia.imagemap.util.SvgHelper;
 import net.yoojia.imagemap.util.SvgHelper.SvgPath;
@@ -42,7 +39,7 @@ public class HighlightImageView1 extends TouchImageView1 implements ShapeExtensi
     private List<SvgPath> mSvgPaths;
     private Handler mhandler;
     private OnShapeActionListener onShapeClickListener;
-    private pRRUInfoShape pInfoShapeNew;
+    private PrruInfoShape pInfoShapeNew;
     private Map<Object, Shape> shapesCache;
 
     public int getmFiterColor() {
@@ -212,7 +209,7 @@ public class HighlightImageView1 extends TouchImageView1 implements ShapeExtensi
     protected Shape onViewLongClickShape(float xOnView, float yOnView) {
         this.longClickShape = null;
         for (Shape shape : this.shapesCache.values()) {
-            if (shape.inArea(xOnView, yOnView) && (shape instanceof pRRUInfoShape)) {
+            if (shape.inArea(xOnView, yOnView) && (shape instanceof PrruInfoShape)) {
                 this.longClickShape = shape;
                 break;
             }
@@ -230,7 +227,7 @@ public class HighlightImageView1 extends TouchImageView1 implements ShapeExtensi
 
     public void autoShowView(Shape shape) {
         if (this.onShapeClickListener != null) {
-            this.onShapeClickListener.onPrruInfoShapeClick((pRRUInfoShape) shape, shape.getCenterX(), shape.getCenterY());
+            this.onShapeClickListener.onPrruInfoShapeClick((PrruInfoShape) shape, shape.getCenterX(), shape.getCenterY());
         }
     }
 
@@ -253,8 +250,8 @@ public class HighlightImageView1 extends TouchImageView1 implements ShapeExtensi
                     if (this.onShapeClickListener != null) {
                         this.onShapeClickListener.onMoniShapeClick((MoniPointShape) shape, shape.getCenterX(), shape.getCenterY());
                     }
-                } else if ((shape instanceof pRRUInfoShape) && this.onShapeClickListener != null) {
-                    this.onShapeClickListener.onPrruInfoShapeClick((pRRUInfoShape) shape, shape.getCenterX(), shape.getCenterY());
+                } else if ((shape instanceof PrruInfoShape) && this.onShapeClickListener != null) {
+                    this.onShapeClickListener.onPrruInfoShapeClick((PrruInfoShape) shape, shape.getCenterX(), shape.getCenterY());
                 }
                 PointF point = new PointF(shape.getCenterX(), shape.getCenterY());
                 point = MatrixConverHelper.mapMatrixPoint(getImageMatrix(), point.x, point.y);

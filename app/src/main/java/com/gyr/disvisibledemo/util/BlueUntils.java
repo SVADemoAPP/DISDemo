@@ -2,7 +2,7 @@ package com.gyr.disvisibledemo.util;
 
 import android.bluetooth.BluetoothAdapter;
 
-public class BlueUntil {
+public class BlueUntils {
     private static BluetoothAdapter mAdapter = BluetoothAdapter.getDefaultAdapter();
     public static BluetoothAdapter getBluetoothAdapter(){
         return mAdapter;

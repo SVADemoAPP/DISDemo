@@ -9,7 +9,7 @@ import android.graphics.drawable.PictureDrawable;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.FrameLayout.LayoutParams;
+
 import com.caverock.androidsvg.SVG;
 import net.yoojia.imagemap.TouchImageView1.MyOnTouchListener;
 import net.yoojia.imagemap.TouchImageView1.OnLongClickListener1;
@@ -24,7 +24,7 @@ import net.yoojia.imagemap.core.Shape;
 import net.yoojia.imagemap.core.ShapeExtension;
 import net.yoojia.imagemap.core.ShapeExtension.OnShapeActionListener;
 import net.yoojia.imagemap.core.SpecialShape;
-import net.yoojia.imagemap.core.pRRUInfoShape;
+import net.yoojia.imagemap.core.PrruInfoShape;
 import net.yoojia.imagemap.support.TranslateAnimation.OnAnimationListener;
 import net.yoojia.imagemap.util.ImageViewHelper;
 import net.yoojia.imagemap.util.ImageViewHelper.OnMaxZoomCallback;
@@ -302,7 +302,7 @@ public class ImageMap1 extends FrameLayout implements ShapeExtension, OnShapeAct
         }
     }
 
-    public void onPrruInfoShapeClick(pRRUInfoShape shape, float xOnImage, float yOnImage) {
+    public void onPrruInfoShapeClick(PrruInfoShape shape, float xOnImage, float yOnImage) {
         if (this.mOnShapeClickListener != null) {
             this.mOnShapeClickListener.onPrruInfoShapeClick(shape, xOnImage, yOnImage);
             for (Shape item : this.highlightImageView.getShapes()) {

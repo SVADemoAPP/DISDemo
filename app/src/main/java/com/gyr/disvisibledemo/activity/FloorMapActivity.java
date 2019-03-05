@@ -1,6 +1,5 @@
 package com.gyr.disvisibledemo.activity;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -9,7 +8,6 @@ import android.graphics.Color;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
@@ -24,8 +22,9 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 import com.gyr.disvisibledemo.R;
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
+import com.gyr.disvisibledemo.framework.utils.StringUtil;
 import com.gyr.disvisibledemo.util.Constant;
-import com.journeyapps.barcodescanner.CaptureActivity;
+import com.gyr.disvisibledemo.util.XmlUntils;
 
 import net.yoojia.imagemap.ImageMap1;
 import net.yoojia.imagemap.TouchImageView1;
@@ -36,26 +35,24 @@ import net.yoojia.imagemap.core.PushMessageShape;
 import net.yoojia.imagemap.core.Shape;
 import net.yoojia.imagemap.core.ShapeExtension;
 import net.yoojia.imagemap.core.SpecialShape;
-import net.yoojia.imagemap.core.pRRUInfoShape;
+import net.yoojia.imagemap.core.PrruInfoShape;
 
-import org.xutils.view.annotation.ViewInject;
-import org.xutils.x;
+import org.dom4j.Element;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 import static com.google.zxing.integration.android.IntentIntegrator.REQUEST_CODE;
 
 public class FloorMapActivity extends BaseActivity implements View.OnClickListener {
     private static final int CODE_OPEN_CAMERA = 1;
-    private static final int CODE_OPEN_ZXING_REQUEST = 10001;
     private static final String IMAGE_ROOT_PATH = Environment.getExternalStorageState() + File.separator + "Tester";//todo
-    private pRRUInfoShape mNowSelectPrru;
-    private String mFloorMapName; //选择的地图名称
+    private PrruInfoShape mNowSelectPrru;
     private int mWidth;
     private int mHeight;
     private Random mRandom = new Random();
@@ -100,27 +97,35 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
 
     @Override
     public void dealLogicBeforeInitView() {
-        mFloorMapName = (String) getIntent().getExtras().get("floormap");
-        char num = mFloorMapName.charAt(mFloorMapName.length() - 1);
-        Bitmap bitmap = BitmapFactory.decodeFile(Constant.sdPath + "/maps/floor_" + num + ".png");
+        String mapPath = (String) getIntent().getExtras().get("floormap");
+        String siteName = mapPath.substring(0,mapPath.indexOf(File.separator));
+        String floorName = mapPath.substring(mapPath.indexOf(File.separator)+1,mapPath.indexOf("."));
+        Bitmap bitmap = BitmapFactory.decodeFile(Constant.DATA_PATH + File.separator + mapPath);
         mWidth = bitmap.getWidth();
         mHeight = bitmap.getHeight();
         mFloorMap.setMapBitmap(bitmap);
-        int prruX1 = mRandom.nextInt(mWidth);
-        int prruY1 = mRandom.nextInt(mHeight);
-        pRRUInfoShape pRRUInfoShape1 = new pRRUInfoShape("test1", Color.YELLOW, this);
-        pRRUInfoShape1.setValues(prruX1, prruY1);
-        pRRUInfoShape1.setBind(false);
-        pRRUInfoShape1.setPrruShowType(pRRUInfoShape.pRRUType.outArea);
-        mFloorMap.addShape(pRRUInfoShape1, false);
-        int prruX2 = mRandom.nextInt(mWidth);
-        int prruY2 = mRandom.nextInt(mHeight);
-        pRRUInfoShape pRRUInfoShape2 = new pRRUInfoShape("test2", Color.YELLOW, this);
-        pRRUInfoShape2.setValues(prruX2, prruY2);
-        pRRUInfoShape2.setBind(true);
-        pRRUInfoShape2.setPrruShowType(pRRUInfoShape.pRRUType.inArea);
-        mFloorMap.addShape(pRRUInfoShape2, false);
-
+        Element rootElement = XmlUntils.getRootElement(Constant.DATA_PATH + File.separator + siteName + File.separator + "project.xml");
+        List<Element> floors = XmlUntils.getElementListByName(rootElement,"Floors");
+        for(Element element : floors){
+            //如果是同一楼层
+            if(floorName.equals(XmlUntils.getAttributeValueByName(element,"name"))){
+                List<Element> nes = XmlUntils.getElementListByName(element,"NE");
+                for(Element ne : nes){
+                    PrruInfoShape PrruInfoShape = new PrruInfoShape(floorName,Color.YELLOW,this);
+                    PrruInfoShape.setId(XmlUntils.getAttributeValueByName(ne,"id"));
+                    PrruInfoShape.setValues(Float.parseFloat(XmlUntils.getAttributeValueByName(ne,"x")),Float.parseFloat(XmlUntils.getAttributeValueByName(ne,"y")));
+                    if(StringUtil.isNullOrEmpty(XmlUntils.getAttributeValueByName(ne,"esn"))){
+                        PrruInfoShape.setBind(false);
+                        //PrruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.outArea);
+                    }else {
+                        PrruInfoShape.setBind(true);
+                        //PrruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.inArea);
+                    }
+                    mFloorMap.addShape(PrruInfoShape,false);
+                }
+                break;
+            }
+        }
     }
 
     private View.OnClickListener onMenuClickListener = new View.OnClickListener() {
@@ -130,14 +135,14 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                 case R.id.menu_bind:
                     if (mNowSelectPrru != null) {
                         mNowSelectPrru.setBind(true);
-                        mNowSelectPrru.setPrruShowType(pRRUInfoShape.pRRUType.inArea);
+                        mNowSelectPrru.setPrruShowType(PrruInfoShape.pRRUType.inArea);
                     }
                     openZxing();
                     break;
                 case R.id.menu_unbind:
                     if (mNowSelectPrru != null) {
                         mNowSelectPrru.setBind(false);
-                        mNowSelectPrru.setPrruShowType(pRRUInfoShape.pRRUType.outArea);
+                        mNowSelectPrru.setPrruShowType(PrruInfoShape.pRRUType.outArea);
 
                     }
                     openZxing();
@@ -158,7 +163,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     private void openSysCamera(String photoName) {
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(
-                new File(Constant.sdPath + "/photos", photoName)));
+                new File(Constant.SD_PATH + "/photos", photoName)));
         startActivityForResult(cameraIntent, CODE_OPEN_CAMERA);
     }
 
@@ -180,8 +185,8 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
             @Override
             public void onDisplay(Shape shape, View bubbleView) {
                 //                Log.e("msg",shape.toString());
-                if (shape instanceof pRRUInfoShape) {
-                    if (((pRRUInfoShape) shape).isBind()) {
+                if (shape instanceof PrruInfoShape) {
+                    if (((PrruInfoShape) shape).isBind()) {
                         mMenuBind.setVisibility(View.VISIBLE);
                         mMenuUnBind.setVisibility(View.GONE);
                     } else {
@@ -204,7 +209,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
             }
 
             @Override
-            public void onPrruInfoShapeClick(pRRUInfoShape prruinfoshape, float f, float f2) {
+            public void onPrruInfoShapeClick(PrruInfoShape prruinfoshape, float f, float f2) {
 //                showToast("单击:"+prruinfoshape.getTag());
                 mNowSelectPrru = prruinfoshape;
             }
@@ -228,8 +233,8 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         mFloorMap.setOnLongClickListener1(new TouchImageView1.OnLongClickListener1() {
             @Override
             public void onLongClick(Shape shape) {
-                if (shape instanceof pRRUInfoShape) {
-                    showToast("长按:" + ((pRRUInfoShape) shape).getTag());
+                if (shape instanceof PrruInfoShape) {
+                    showToast("长按:" + ((PrruInfoShape) shape).getTag());
                 }
 
             }

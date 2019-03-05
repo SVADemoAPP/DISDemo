@@ -1,9 +1,13 @@
 package com.gyr.disvisibledemo.activity;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -26,10 +30,10 @@ import com.gyr.disvisibledemo.adapter.RvSearchAdapter;
 import com.gyr.disvisibledemo.bean.FloorModel;
 import com.gyr.disvisibledemo.bean.SiteModel;
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
-import com.gyr.disvisibledemo.framework.sharef.SharedPrefHelper;
-import com.gyr.disvisibledemo.util.BlueUntil;
+import com.gyr.disvisibledemo.util.BlueUntils;
 import com.gyr.disvisibledemo.util.Constant;
-import com.gyr.disvisibledemo.util.FileUtil;
+import com.gyr.disvisibledemo.util.FileUtils;
+import com.gyr.disvisibledemo.util.ZipUtils;
 import com.leon.lfilepickerlibrary.LFilePicker;
 import com.zaaach.toprightmenu.MenuItem;
 import com.zaaach.toprightmenu.TopRightMenu;
@@ -39,13 +43,14 @@ import org.xutils.x;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class HomeActivity extends BaseActivity implements View.OnClickListener {
     private static final int REQUESTCODE_FROM_ACTIVITY = 1000;  //选择文件返回code
     private static final String DIRECTION_ROOT = Environment.getExternalStorageDirectory().getAbsolutePath(); //文件根目录
-    private static final String DIRECTION_BLUETOOTH_0 = DIRECTION_ROOT+File.separator+"Bluetooth/"; //蓝牙路径1  路径不区分大小写
-    private static final String DIRECTION_BLUETOOTH_1 = DIRECTION_ROOT+File.separator+"Download/Bluetooth/"; //蓝牙路径2
+    private static final String DIRECTION_BLUETOOTH_0 = DIRECTION_ROOT + File.separator + "Bluetooth/"; //蓝牙路径1  路径不区分大小写
+    private static final String DIRECTION_BLUETOOTH_1 = DIRECTION_ROOT + File.separator + "Download/Bluetooth/"; //蓝牙路径2
     private RecyclerView mRecyclerView;
     private LinearLayout mllTop;
     private RvGroupAdapter mRvGroupAdapter;
@@ -120,42 +125,52 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
 
 
     private void initFloorMapsDir() {
-        File dir = new File(Constant.sdPath + "/maps/");
+        File dir = new File(Constant.SD_PATH + "/data/");
         if (!dir.exists()) {
             dir.mkdirs();
         }
-        File photosDir = new File(Constant.sdPath + "/photos/");
+        File photosDir = new File(Constant.SD_PATH + "/photos/");
         if (!photosDir.exists()) {
             photosDir.mkdirs();
         }
-        if (SharedPrefHelper.getBoolean(this, "isFirst", true)) {
+        /*if (SharedPrefHelper.getBoolean(this, "isFirst", true)) {
             SharedPrefHelper.putBoolean(this, "isFirst", false);
             for (int i = 0; i < 5; i++) {
-                File mapFile = new File(Constant.sdPath + "/maps/floor_" + i + ".png");
+                File mapFile = new File(Constant.SD_PATH + "/maps/floor_" + i + ".png");
                 if (!mapFile.exists()) {
                     try {
                         mapFile.createNewFile();
-                        FileUtil.writeBytesToFile(this.getAssets().open("floor_" + i + ".png"), mapFile);
+                        FileUtils.writeBytesToFile(this.getAssets().open("floor_" + i + ".png"), mapFile);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
             }
 
-        }
+        }*/
     }
 
     private void initSiteAndFloor() {
-        for (int i = 1; i < 6; i++) {
-            SiteModel siteModel = new SiteModel();
-            siteModel.siteName = "U" + i;
-            for (int j = 1; j < 5; j++) {
-                FloorModel floorModel = new FloorModel();
-                floorModel.floorName = "F" + "_" + j;
-                floorModel.floorMap = "map" + i + "_" + j;
-                siteModel.floorModelList.add(floorModel);
+        File dataFile = new File(Constant.DATA_PATH);
+        List<File> fileList = Arrays.asList(dataFile.listFiles());
+        for (File file : fileList) {
+            if (!file.isFile()) {
+                SiteModel siteModel = new SiteModel();
+                siteModel.siteName = file.getName();
+                for (File subFiles : Arrays.asList(file.listFiles())) {
+                    if (subFiles.isFile()) {
+                        String fileType = subFiles.getName().toUpperCase().substring(subFiles.getName().lastIndexOf("."));
+                        if (Constant.IMGFILE.contains(fileType)) {
+                            FloorModel floorModel = new FloorModel();
+                            floorModel.floorName = subFiles.getName().substring(0, subFiles.getName().lastIndexOf("."));
+                            floorModel.floorMap = file.getName() + File.separator + subFiles.getName();
+                            siteModel.floorModelList.add(floorModel);
+                        }
+                    }
+                }
+                siteList.add(siteModel);
             }
-            siteList.add(siteModel);
+
         }
     }
 
@@ -186,7 +201,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     private RvMemberAdapter.OnMemberItemClickListener onMemberItemClickListener = new RvMemberAdapter.OnMemberItemClickListener() {
         @Override
         public void memberClick(String floorMap, int type) {
-            Log.e("XHF","floorMap="+floorMap+" , type="+type);
+            Log.e("XHF", "floorMap=" + floorMap + " , type=" + type);
             Bundle bundle = new Bundle();
             bundle.putString("floormap", floorMap);
             openActivity(FloorMapActivity.class, bundle);
@@ -208,39 +223,112 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     private RvGroupAdapter.OnGroupItemClickListener onGroupItemClickListener = new RvGroupAdapter.OnGroupItemClickListener() {
         @Override
         public void groupClick(String siteName, int type) {
-            if (type == 0) {
-                BluetoothAdapter mAdapter = BlueUntil.getBluetoothAdapter();
-                if (mAdapter == null) {
-                    showToast("本机没有找到蓝牙硬件，无法使用蓝牙功能！");
-                }
-                if (!mAdapter.isEnabled()) {
-                    //弹出对话框提示用户是后打开
-                    Intent enabler = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                    startActivityForResult(enabler, 0);
-                    //不做提示，强行打开，此方法需要权限<uses-permissionandroid:name="android.permission.BLUETOOTH_ADMIN" />
-                    // mAdapter.enable();
-                }
+            switch (type) {
+                case 0:
+                    if (!BlueUntils.isBluetoothAvaliable()) {
+                        showToast("本机没有找到蓝牙硬件，无法使用蓝牙功能！");
+                    }
+                    BluetoothAdapter mAdapter = BlueUntils.getBluetoothAdapter();
+
+                    if (!mAdapter.isEnabled()) {
+                        //弹出对话框提示用户是后打开
+                        Intent enabler = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                        enabler.putExtra("siteName", siteName);
+                        startActivityForResult(enabler, 0);
+                    } else {
+                        shareFile(siteName);
+                    }
+                    break;
+                case 1:
+                    showNormalDialog("合并", "确定进行合并操作吗？");
+                    break;
+                case 2:
+                    String path = Constant.DATA_PATH + File.separator + siteName;
+                    FileUtils.deleteDir(new File(path));
+                    showNormalDialog("删除", "确定进行删除操作吗？");
+                    break;
+                default:
+                    showToast("未知的点击操作" + type);
+                    break;
             }
         }
     };
+
+    private void showNormalDialog(String title, String message) {
+        /* @setIcon 设置对话框图标
+         * @setTitle 设置对话框标题
+         * @setMessage 设置对话框消息提示
+         * setXXX方法返回Dialog对象，因此可以链式设置属性
+         */
+        final AlertDialog.Builder normalDialog =
+                new AlertDialog.Builder(mContext);
+//        normalDialog.setIcon(R.drawable.icon_dialog);
+        normalDialog.setTitle(title);
+        normalDialog.setMessage(message);
+        normalDialog.setPositiveButton("确定",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(mContext, "操作成功", Toast.LENGTH_SHORT).show();
+                    }
+                });
+        normalDialog.setNegativeButton("关闭",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //...To-do
+                    }
+                });
+        // 显示
+        normalDialog.show();
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 0) {
-            if (resultCode == RESULT_OK) {
-                showToast("OK!");
-            }
+            String siteName = data.getStringExtra("siteName");
+            shareFile(siteName);
         }
-
         if (resultCode == RESULT_OK) {
             if (requestCode == REQUESTCODE_FROM_ACTIVITY) {
                 String path = data.getStringExtra("path"); //获取返回文件夹路径
                 ArrayList<String> paths = data.getStringArrayListExtra("paths"); //获取返回文件路径 （可以有多个）
                 Log.e("TAG", "path=" + paths.get(0));
+                String filePath = paths.get(0);
+                if (FileUtils.isZipFile(filePath)) {
+                    ZipUtils.unzip(Constant.DATA_PATH, filePath);
+                    // 刷新主界面
+                    initFloorMapsDir();
+                    mRvGroupAdapter.notifyDataSetChanged();
+                } else {
+                    Toast.makeText(mContext, "选择的文件不正确", Toast.LENGTH_SHORT).show();
+                }
+
             }
         }
+    }
 
+    private void shareFile(String siteName) {
+
+        String basePath = Constant.DATA_PATH + File.separator;
+        String path = basePath + siteName + ".zip";
+        try {
+            ZipUtils.zipDirectory(basePath + siteName);
+        } catch (IOException e) {
+            showToast("文件压缩失败");
+        }
+
+        //调用android分享窗口
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("*/*");
+        intent.setPackage("com.android.bluetooth");
+        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(path)));//path为文件的路径
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Intent chooser = Intent.createChooser(intent, "Share app");
+        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(chooser);
     }
 
 
@@ -333,6 +421,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                     public void onMenuItemClick(int position) {
                         switch (position) {
                             case 0: //蓝牙目录
+                                scanBlueToothFile();
                                 new Thread(new Runnable() {  //延迟执行 避免卡住UI
                                     @Override
                                     public void run() {
@@ -360,7 +449,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                                             runOnUiThread(new Runnable() {
                                                 @Override
                                                 public void run() {
-                                                    openFileSelector(DIRECTION_ROOT,"文件选择"); //打开文件根目录
+                                                    openFileSelector(DIRECTION_ROOT, "文件选择"); //打开文件根目录
                                                 }
                                             });
                                         } catch (InterruptedException e) {
@@ -383,12 +472,12 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         File file = new File(DIRECTION_BLUETOOTH_0);
         if (file.exists()) //判断文件目录是否存在
         {
-            openFileSelector(DIRECTION_BLUETOOTH_0,"蓝牙目录"); //存在打开
+            openFileSelector(DIRECTION_BLUETOOTH_0, "蓝牙目录"); //存在打开
             return;
         }
         File file2 = new File(DIRECTION_BLUETOOTH_1);
         if (file2.exists()) {
-            openFileSelector(DIRECTION_BLUETOOTH_1,"蓝牙目录"); //存在打开
+            openFileSelector(DIRECTION_BLUETOOTH_1, "蓝牙目录"); //存在打开
             return;
         }
         Toast.makeText(mContext, "该没有蓝牙目录，请选择其他目录", Toast.LENGTH_SHORT).show();
@@ -398,9 +487,9 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
      * 打开文件路径选择器
      *
      * @param direction 文件路径
-     * @param name title名称
+     * @param name      title名称
      */
-    private void openFileSelector(String direction,String name) {
+    private void openFileSelector(String direction, String name) {
         new LFilePicker()
                 .withTitle(name)
                 .withActivity((Activity) mContext)
@@ -409,9 +498,25 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 .withMutilyMode(false)  //false 为单选 true为多选
                 .withIsGreater(false)
                 .withFileSize(500 * 1024)   //文件大小过滤器
-//                .withFileFilter(new String[]{".txt", ".png", ".zip"})  //文件类型过滤器 只保留写入文件类型
+                .withFileFilter(new String[]{".zip"})  //文件类型过滤器 只保留写入文件类型
                 .start();
     }
 
+
+    private void  scanBlueToothFile(){
+        File file = new File(DIRECTION_BLUETOOTH_0);
+        if (file.exists()) //判断文件目录是否存在
+        {
+            MediaScannerConnection.scanFile(mContext, new String[]{DIRECTION_BLUETOOTH_0}, null, null); //扫描文件
+            return;
+        }
+        File file2 = new File(DIRECTION_BLUETOOTH_1);
+        if (file2.exists()) {
+            MediaScannerConnection.scanFile(mContext, new String[]{DIRECTION_BLUETOOTH_1}, null, null); //扫描文件
+            return;
+        }
+
+
+    }
 
 }

@@ -7,7 +7,7 @@ public interface ShapeExtension {
 
         void onMoniShapeClick(MoniPointShape moniPointShape, float f, float f2);
 
-        void onPrruInfoShapeClick(pRRUInfoShape prruinfoshape, float f, float f2);
+        void onPrruInfoShapeClick(PrruInfoShape prruinfoshape, float f, float f2);
 
         void onPushMessageShapeClick(PushMessageShape pushMessageShape, float f, float f2);
 
