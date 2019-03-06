@@ -1,5 +1,6 @@
 package com.gyr.disvisibledemo.activity;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -35,9 +36,12 @@ import com.gyr.disvisibledemo.util.Constant;
 import com.gyr.disvisibledemo.util.FileUtils;
 import com.gyr.disvisibledemo.util.ZipUtils;
 import com.leon.lfilepickerlibrary.LFilePicker;
+import com.tbruyelle.rxpermissions2.Permission;
+import com.tbruyelle.rxpermissions2.RxPermissions;
 import com.zaaach.toprightmenu.MenuItem;
 import com.zaaach.toprightmenu.TopRightMenu;
 
+import org.xutils.common.util.LogUtil;
 import org.xutils.x;
 
 import java.io.File;
@@ -45,6 +49,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import io.reactivex.functions.Consumer;
 
 public class HomeActivity extends BaseActivity implements View.OnClickListener {
     private static final int REQUESTCODE_FROM_ACTIVITY = 1000;  //选择文件返回code
@@ -68,6 +74,11 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     private Context mContext;
     private TopRightMenu mTopRightMenu;
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+    }
 
     @Override
     public void findView() {
@@ -120,7 +131,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     public void setContentLayout() {
         mContext = this;
         setContentView(R.layout.activity_home);
-        x.view().inject(this);
+
     }
 
 
@@ -300,7 +311,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 Log.e("TAG", "path=" + paths.get(0));
                 File file = new File(paths.get(0));
                 if (FileUtils.isZipFile(file)) {
-                    ZipUtils.unzip(Constant.DATA_PATH + File.separator + file.getName().substring(0,file.getName().lastIndexOf(".")), file.getPath());
+                    ZipUtils.unzip(Constant.DATA_PATH + File.separator + file.getName().substring(0, file.getName().lastIndexOf(".")), file.getPath());
                     // 刷新主界面
                     initFloorMapsDir();
                     mRvGroupAdapter.notifyDataSetChanged();
@@ -499,12 +510,12 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 .withStartPath(direction)//打开文件初始路径
                 .withMutilyMode(false)  //false 为单选 true为多选
                 .withIsGreater(false)
-                .withFileSize(500 * 1024*10)   //文件大小过滤器
+                .withFileSize(500 * 1024 * 10)   //文件大小过滤器
                 .start();
     }
 
 
-    private void  scanBlueToothFile(){
+    private void scanBlueToothFile() {
         File file = new File(DIRECTION_BLUETOOTH_0);
         if (file.exists()) //判断文件目录是否存在
         {
@@ -519,5 +530,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
 
 
     }
+
+
 
 }

@@ -1,6 +1,7 @@
 package com.gyr.disvisibledemo.framework.activity;
 
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -13,25 +14,30 @@ import android.view.View.OnClickListener;
 import android.view.WindowManager.BadTokenException;
 import android.widget.Toast;
 
+import com.tbruyelle.rxpermissions2.Permission;
+import com.tbruyelle.rxpermissions2.RxPermissions;
+
+import io.reactivex.functions.Consumer;
+
 
 public abstract class BaseActivity extends Activity {
     private ProgressDialog progressDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getRxPermission();
         setContentLayout();
         findView();
-        dealLogicBeforeInitView();
-        initView();
-        dealLogicAfterInitView();
+
     }
 
     public abstract void findView();
+
     /**
      * 设置布局，在onCreate()生命周期中回调
      */
     public abstract void setContentLayout();
-
 
 
     /**
@@ -72,6 +78,7 @@ public abstract class BaseActivity extends Activity {
         int screenHeight = dm.heightPixels;
         return screenHeight;
     }
+
     /**
      * 短时间显示Toast
      *
@@ -128,7 +135,6 @@ public abstract class BaseActivity extends Activity {
 
     /**
      * 显示正在加载的进度条
-     *
      */
     public void showProgressDialog() {
         if (!isFinishing() && progressDialog != null && progressDialog.isShowing()) {
@@ -164,7 +170,6 @@ public abstract class BaseActivity extends Activity {
 
     /**
      * 隐藏正在加载的进度条
-     *
      */
     public void dismissProgressDialog() {
         if (!isFinishing() && null != progressDialog && progressDialog.isShowing() == true) {
@@ -177,6 +182,7 @@ public abstract class BaseActivity extends Activity {
         dismissProgressDialog();
         super.onDestroy();
     }
+
     /**
      * 通过类名启动Activity
      *
@@ -245,6 +251,29 @@ public abstract class BaseActivity extends Activity {
             }
             startActivityForResult(intent, requestCode);
         }
+    }
+
+    /***
+     * 动态获取权限
+     */
+    private void getRxPermission() {
+        RxPermissions rxPermissions = new RxPermissions(this); // where this is an Activity instance
+        rxPermissions.requestEach(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                .subscribe(new Consumer<Permission>() {
+                    @Override
+                    public void accept(Permission permission) throws Exception {
+                        if (permission.granted) { //给了权限
+                            dealLogicBeforeInitView();
+                            initView();
+                            dealLogicAfterInitView();
+                        } else if (permission.shouldShowRequestPermissionRationale) {
+
+                        } else {
+                            showToast("未授权权限，部分功能不能使用");
+                        }
+                    }
+                });
+
     }
 }
 
