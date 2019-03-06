@@ -21,7 +21,7 @@ public class PrruInfoShape extends Shape {
     private Context context;
     private String id;
     private String pictureUrl;
-    private float radius = 13.0f;
+    private float radius = 20.0f;
     private Object tag;
     private String text = "";
     private String url;
@@ -95,7 +95,7 @@ public class PrruInfoShape extends Shape {
                     this.view_outArea = View.inflate(this.context, R.layout.prru_out_area, null);
                     this.bmp_outArea = convertViewToBitmap(this.view_outArea);
                 }
-                setRadius((float) ((this.bmp_outArea.getWidth() / 2) + 20));
+                setRadius((float) ((this.bmp_outArea.getWidth() / 2) + 90));
                 this.bmp_show = this.bmp_outArea;
                 return;
             case 2:
@@ -103,7 +103,7 @@ public class PrruInfoShape extends Shape {
                     this.view_inArea = View.inflate(this.context, R.layout.prru_in_area, null);
                     this.bmp_inArea = convertViewToBitmap(this.view_inArea);
                 }
-                setRadius((float) ((this.bmp_inArea.getWidth() / 2) + 20));
+                setRadius((float) ((this.bmp_inArea.getWidth() / 2) + 90));
                 this.bmp_show = this.bmp_inArea;
                 return;
             default:
@@ -174,7 +174,8 @@ public class PrruInfoShape extends Shape {
         PointF p = this.center;
         float dx = p.x - x;
         float dy = p.y - y;
-        if (new Float(Math.sqrt((double) ((dx * dx) + (dy * dy)))).floatValue() < r) {
+        float sqrt = (float) Math.sqrt((double) ((dx * dx) + (dy * dy)));
+        if ( sqrt< r) {
             return true;
         }
         return false;

@@ -72,7 +72,7 @@ public class ZipUtils {
      */
     public static void unzip(String basePath,String unzip) {
         File file = new File(unzip);
-        //如果没有传解压目标目录，则默认为文件所在目录
+        //如目标目果没有传解压录，则默认为文件所在目录
         if(StringUtil.isNullOrEmpty(basePath)){
             basePath = file.getParent();
         }
@@ -109,7 +109,7 @@ public class ZipUtils {
                 fos.flush();
                 fos.close();
                 zis.closeEntry();
-                unzip(basePath,zis);
+//                unzip(basePath,zis);
             }
         }
     }

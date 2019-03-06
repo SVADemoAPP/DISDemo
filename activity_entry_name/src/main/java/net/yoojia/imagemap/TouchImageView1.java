@@ -18,7 +18,7 @@ import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
-import android.widget.ImageView;
+
 import com.nineoldandroids.animation.AnimatorSet;
 import net.yoojia.imagemap.animator.MapHandle;
 import net.yoojia.imagemap.animator.MapHandleImp;
@@ -28,7 +28,7 @@ import net.yoojia.imagemap.event.RotateGestureDetector.SimpleOnRotateGestureList
 import net.yoojia.imagemap.util.BaZhanUtil;
 import net.yoojia.imagemap.util.ImageViewHelper;
 
-public class TouchImageView1 extends ImageView implements OnGlobalLayoutListener, MapHandle {
+public class TouchImageView1 extends android.support.v7.widget.AppCompatImageView implements OnGlobalLayoutListener, MapHandle {
     private static final float FRICTION = 0.0f;
     private boolean bLongClick;
     private GestureMode curGestureMode;
@@ -364,9 +364,28 @@ public class TouchImageView1 extends ImageView implements OnGlobalLayoutListener
                 this.mOnRotateListener.onRotate(this.saveRotate);
             }
             int dw = d.getIntrinsicWidth();
+            int dh = d.getIntrinsicHeight();
+
             this.mImageViewHelper.setDrawableSize(dw, d.getIntrinsicHeight());
             this.mImageViewHelper.initImageMatrix(this.imageUsingMatrix);
-            this.mBaZhanUtil = new BaZhanUtil(0.0f, (((float) this.mView_height) * 1.0f) / ((float) dw));
+
+            //这里涉及到缩放问题 。图片的宽高和容器的宽高之间的处理
+            //--------------------------xhf 处理图片和容器适配问题---------------------------------
+            float scale =0;
+            float c1=dh*1f/dw;
+            float c2=mView_height*1f/mView_width;
+            if(c2>c1){  //如果容器比例大于图片   相等其实哪个都可以
+                if(mView_width<mView_height)
+                {
+                    scale= mView_width * 1f / dw;
+                }else {
+                    scale = mView_height * 1f / dh;
+                }
+            }else {
+                scale=mView_height*1f/dh;
+            }
+            //--------------------------xhf 处理图片和容器适配问题---------------------------------
+            this.mBaZhanUtil = new BaZhanUtil(0.0f, scale);
             PointF mid = new PointF(((float) this.mView_width) / 2.0f, ((float) this.mView_height) / 2.0f);
             postMatrixScale(this.mBaZhanUtil.initScale / getScale(), mid);
             postMatrixRotate(this.mBaZhanUtil.initAngle, mid);

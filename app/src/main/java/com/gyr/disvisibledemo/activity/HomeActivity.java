@@ -35,6 +35,7 @@ import com.gyr.disvisibledemo.util.BlueUntils;
 import com.gyr.disvisibledemo.util.Constant;
 import com.gyr.disvisibledemo.util.FileUtils;
 import com.gyr.disvisibledemo.util.ZipUtils;
+import com.gyr.disvisibledemo.util.ZipUtils2;
 import com.gyr.disvisibledemo.view.popup.LoadingDialog;
 import com.leon.lfilepickerlibrary.LFilePicker;
 import com.tbruyelle.rxpermissions2.Permission;
@@ -163,10 +164,12 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         List<File> fileList = Arrays.asList(dataFile.listFiles());
         int index;
         for (File file : fileList) {
-            if (!file.isFile()) {
+            if (file.isDirectory()) {
                 SiteModel siteModel = new SiteModel();
                 siteModel.siteName = file.getName();
-                for (File subFiles : Arrays.asList(file.listFiles())) {
+                List<File> allFiles = Arrays.asList(file.listFiles());
+                for (File subFiles : allFiles) {
+
                     index = subFiles.getName().lastIndexOf(".");
                     if (index > -1) {
                         String fileType = subFiles.getName().toUpperCase().substring(index);
@@ -305,33 +308,39 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         }
         if (resultCode == RESULT_OK) {
             if (requestCode == REQUESTCODE_FROM_ACTIVITY) {
-                LoadingDialog.with(mContext).showDialog();
+//                LoadingDialog.with(mContext).showDialog();
                 String path = data.getStringExtra("path"); //获取返回文件夹路径
                 ArrayList<String> paths = data.getStringArrayListExtra("paths"); //获取返回文件路径 （可以有多个）
                 Log.e("TAG", "path=" + paths.get(0));
                 File file = new File(paths.get(0));
                 if (FileUtils.isZipFile(file)) {
-                    ZipUtils.unzip(Constant.DATA_PATH + File.separator + file.getName().substring(0, file.getName().lastIndexOf(".")), file.getPath());
+                    try {
+                        ZipUtils2.UnZipFolder( file.getPath(),Constant.DATA_PATH );
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                     // 刷新主界面
                     initSiteAndFloor();
                     mRvGroupAdapter.notifyDataSetChanged();
                 } else {
                     Toast.makeText(mContext, "选择的文件不正确", Toast.LENGTH_SHORT).show();
                 }
-                LoadingDialog.with(mContext).cancelDialog();
+//                LoadingDialog.with(mContext).cancelDialog();
 
             }
         }
     }
 
     private void shareFile(String siteName) {
-
         String basePath = Constant.DATA_PATH + File.separator;
         String path = basePath + siteName + ".zip";
         try {
-            ZipUtils.zipDirectory(basePath + siteName);
+//            ZipUtils.zipDirectory(basePath + siteName);
+            ZipUtils2.ZipFolder(basePath + siteName,path);
         } catch (IOException e) {
             showToast("文件压缩失败");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         //调用android分享窗口
@@ -499,8 +508,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
 
     @Override
     protected void onDestroy() {
-        if( LoadingDialog.with(mContext).isShowing())
-        {
+        if (LoadingDialog.with(mContext).isShowing()) {
             LoadingDialog.with(mContext).cancelDialog();
         }
         super.onDestroy();
@@ -525,21 +533,21 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     }
 
 
-          private void scanBlueToothFile() {
-            File file = new File(DIRECTION_BLUETOOTH_0);
-            if (file.exists()) //判断文件目录是否存在
-            {
-                MediaScannerConnection.scanFile(mContext, new String[]{DIRECTION_BLUETOOTH_0}, null, null); //扫描文件
-                return;
-            }
-            File file2 = new File(DIRECTION_BLUETOOTH_1);
-            if (file2.exists()) {
-                MediaScannerConnection.scanFile(mContext, new String[]{DIRECTION_BLUETOOTH_1}, null, null); //扫描文件
-                return;
-            }
-
-
+    private void scanBlueToothFile() {
+        File file = new File(DIRECTION_BLUETOOTH_0);
+        if (file.exists()) //判断文件目录是否存在
+        {
+            MediaScannerConnection.scanFile(mContext, new String[]{DIRECTION_BLUETOOTH_0}, null, null); //扫描文件
+            return;
         }
+        File file2 = new File(DIRECTION_BLUETOOTH_1);
+        if (file2.exists()) {
+            MediaScannerConnection.scanFile(mContext, new String[]{DIRECTION_BLUETOOTH_1}, null, null); //扫描文件
+            return;
+        }
+
+
+    }
 
 
 }

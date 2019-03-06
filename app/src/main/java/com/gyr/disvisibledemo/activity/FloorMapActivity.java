@@ -58,7 +58,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     private Random mRandom = new Random();
 
     private Context mContext;
-
+    private boolean mFirst = false;
     private View mMenuView;
     private LinearLayout mMenuBind;
     private LinearLayout mMenuMove;
@@ -77,6 +77,8 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     private Uri photoUri;
     private File ffile;
     private String mFileUrl;
+    private Bitmap mBitmap;
+    private String mapPath;
 
     @Override
     public void findView() {
@@ -96,42 +98,58 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     }
 
     @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            if (!mFirst) {
+                mFirst = true;
+                getData();
+            }
+
+        }
+    }
+
+    @Override
     public void dealLogicBeforeInitView() {
-        String mapPath = (String) getIntent().getExtras().get("floormap");
-        String siteName = mapPath.substring(0,mapPath.indexOf(File.separator));
-        String floorName = mapPath.substring(mapPath.indexOf(File.separator)+1,mapPath.indexOf("."));
-        Bitmap bitmap = BitmapFactory.decodeFile(Constant.DATA_PATH + File.separator + mapPath);
-        mWidth = bitmap.getWidth();
-        mHeight = bitmap.getHeight();
-        mFloorMap.setMapBitmap(bitmap);
+        mapPath = (String) getIntent().getExtras().get("floormap");
+        mBitmap = BitmapFactory.decodeFile(Constant.DATA_PATH + File.separator + mapPath);
+        mWidth = mBitmap.getWidth();
+        mHeight = mBitmap.getHeight();
+        mFloorMap.setMapBitmap(mBitmap);
+        mFloorMap.setAllowRotate(false); //不能转动
+    }
+
+    private void getData() {
+        String siteName = mapPath.substring(0, mapPath.indexOf(File.separator));
+        String floorName = mapPath.substring(mapPath.indexOf(File.separator) + 1, mapPath.indexOf("."));
         Element rootElement = XmlUntils.getRootElement(Constant.DATA_PATH + File.separator + siteName + File.separator + "project.xml");
-        Element floors = XmlUntils.getElementByName(rootElement,"Floors");
-        List<Element> floorList = XmlUntils.getElementListByName(floors,"Floor");
+        Element floors = XmlUntils.getElementByName(rootElement, "Floors");
+        List<Element> floorList = XmlUntils.getElementListByName(floors, "Floor");
         boolean flag = false;
-        for(Element element : floorList){
+        for (Element element : floorList) {
             //如果是同一楼层
-            if(floorName.equals(XmlUntils.getAttributeValueByName(element,"floorCode"))){
-                List<Element> nes = XmlUntils.getElementListByName(XmlUntils.getElementByName(element,"NEs"),"NE");
-                for(Element ne : nes){
-                    PrruInfoShape prruInfoShape = new PrruInfoShape(XmlUntils.getAttributeValueByName(ne,"id"),Color.YELLOW,this);
-                    prruInfoShape.setId(XmlUntils.getAttributeValueByName(ne,"id"));
-                    prruInfoShape.setValues(Float.parseFloat(XmlUntils.getAttributeValueByName(ne,"x")),Float.parseFloat(XmlUntils.getAttributeValueByName(ne,"y")));
+            if (floorName.equals(XmlUntils.getAttributeValueByName(element, "floorCode"))) {
+                List<Element> nes = XmlUntils.getElementListByName(XmlUntils.getElementByName(element, "NEs"), "NE");
+                for (Element ne : nes) {
+                    PrruInfoShape prruInfoShape = new PrruInfoShape(XmlUntils.getAttributeValueByName(ne, "id"), Color.YELLOW, this);
+                    prruInfoShape.setId(XmlUntils.getAttributeValueByName(ne, "id"));
+                    prruInfoShape.setValues(Float.parseFloat(XmlUntils.getAttributeValueByName(ne, "x")), Float.parseFloat(XmlUntils.getAttributeValueByName(ne, "y")));
                     prruInfoShape.setBind(false);
-                        prruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.outArea);
-                    if(StringUtil.isNullOrEmpty(XmlUntils.getAttributeValueByName(ne,"esn"))){
+                    prruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.outArea);
+                    if (StringUtil.isNullOrEmpty(XmlUntils.getAttributeValueByName(ne, "esn"))) {
                         prruInfoShape.setBind(false);
                         prruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.outArea);
-                    }else {
+                    } else {
                         prruInfoShape.setBind(true);
                         prruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.inArea);
                     }
-                    mFloorMap.addShape(prruInfoShape,false);
+                    mFloorMap.addShape(prruInfoShape, false);
                 }
                 flag = true;
                 break;
             }
 
-            if(flag){
+            if (flag) {
                 break;
             }
         }
@@ -217,7 +235,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
 
             @Override
             public void onPrruInfoShapeClick(PrruInfoShape prruinfoshape, float f, float f2) {
-                showToast("单击:"+prruinfoshape.getTag());
+                showToast("单击:" + prruinfoshape.getTag());
                 mNowSelectPrru = prruinfoshape;
             }
 
@@ -424,4 +442,14 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // 先判断是否已经回收
+        if (mBitmap != null && !mBitmap.isRecycled()) {
+            // 回收并且置为null
+            mBitmap.recycle();
+            mBitmap = null;
+        }
+    }
 }

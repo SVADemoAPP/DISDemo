@@ -258,7 +258,7 @@ public abstract class BaseActivity extends Activity {
      */
     private void getRxPermission() {
         RxPermissions rxPermissions = new RxPermissions(this); // where this is an Activity instance
-        rxPermissions.requestEach(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        rxPermissions.requestEach(Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS)
                 .subscribe(new Consumer<Permission>() {
                     @Override
                     public void accept(Permission permission) throws Exception {
