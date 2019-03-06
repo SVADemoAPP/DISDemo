@@ -116,6 +116,8 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                     PrruInfoShape prruInfoShape = new PrruInfoShape(XmlUntils.getAttributeValueByName(ne,"id"),Color.YELLOW,this);
                     prruInfoShape.setId(XmlUntils.getAttributeValueByName(ne,"id"));
                     prruInfoShape.setValues(Float.parseFloat(XmlUntils.getAttributeValueByName(ne,"x")),Float.parseFloat(XmlUntils.getAttributeValueByName(ne,"y")));
+                    prruInfoShape.setBind(false);
+                        prruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.outArea);
                     if(StringUtil.isNullOrEmpty(XmlUntils.getAttributeValueByName(ne,"esn"))){
                         prruInfoShape.setBind(false);
                         prruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.outArea);
@@ -150,7 +152,6 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                     if (mNowSelectPrru != null) {
                         mNowSelectPrru.setBind(false);
                         mNowSelectPrru.setPrruShowType(PrruInfoShape.pRRUType.outArea);
-
                     }
                     openZxing();
                     break;
@@ -187,18 +188,17 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         mMenuUnBind.setOnClickListener(onMenuClickListener);
         mMenuMove.setOnClickListener(onMenuClickListener);
         mMenuCamera.setOnClickListener(onMenuClickListener);
-
         mFloorMap.setBubbleView(mMenuView, new Bubble.RenderDelegate() {
             @Override
             public void onDisplay(Shape shape, View bubbleView) {
-                //                Log.e("msg",shape.toString());
                 if (shape instanceof PrruInfoShape) {
                     if (((PrruInfoShape) shape).isBind()) {
-                        mMenuBind.setVisibility(View.VISIBLE);
-                        mMenuUnBind.setVisibility(View.GONE);
-                    } else {
                         mMenuUnBind.setVisibility(View.VISIBLE);
                         mMenuBind.setVisibility(View.GONE);
+                    } else {
+                        mMenuBind.setVisibility(View.VISIBLE);
+                        mMenuUnBind.setVisibility(View.GONE);
+
                     }
                 }
             }
@@ -217,7 +217,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
 
             @Override
             public void onPrruInfoShapeClick(PrruInfoShape prruinfoshape, float f, float f2) {
-//                showToast("单击:"+prruinfoshape.getTag());
+                showToast("单击:"+prruinfoshape.getTag());
                 mNowSelectPrru = prruinfoshape;
             }
 

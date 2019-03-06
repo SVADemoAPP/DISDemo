@@ -53,7 +53,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
             android:gravity="center"
-            android:text="扫码绑定"
+            android:text="解除绑定"
             android:textColor="@color/white"
             android:textSize="13dp" />
     </LinearLayout>

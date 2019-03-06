@@ -304,7 +304,7 @@ public class ImageMap1 extends FrameLayout implements ShapeExtension, OnShapeAct
 
     public void onPrruInfoShapeClick(PrruInfoShape shape, float xOnImage, float yOnImage) {
         if (this.mOnShapeClickListener != null) {
-            this.mOnShapeClickListener.onPrruInfoShapeClick(shape, xOnImage, yOnImage);
+           mOnShapeClickListener.onPrruInfoShapeClick(shape, xOnImage, yOnImage);
             for (Shape item : this.highlightImageView.getShapes()) {
                 item.cleanBubbleRelation();
             }

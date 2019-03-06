@@ -35,6 +35,7 @@ import com.gyr.disvisibledemo.util.BlueUntils;
 import com.gyr.disvisibledemo.util.Constant;
 import com.gyr.disvisibledemo.util.FileUtils;
 import com.gyr.disvisibledemo.util.ZipUtils;
+import com.gyr.disvisibledemo.view.popup.LoadingDialog;
 import com.leon.lfilepickerlibrary.LFilePicker;
 import com.tbruyelle.rxpermissions2.Permission;
 import com.tbruyelle.rxpermissions2.RxPermissions;
@@ -57,28 +58,23 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     private static final String DIRECTION_ROOT = Environment.getExternalStorageDirectory().getAbsolutePath(); //文件根目录
     private static final String DIRECTION_BLUETOOTH_0 = DIRECTION_ROOT + File.separator + "Bluetooth/"; //蓝牙路径1  路径不区分大小写
     private static final String DIRECTION_BLUETOOTH_1 = DIRECTION_ROOT + File.separator + "Download/Bluetooth/"; //蓝牙路径2
-    private RecyclerView mRecyclerView;
-    private LinearLayout mllTop;
-    private RvGroupAdapter mRvGroupAdapter;
+
+    private RecyclerView mRecyclerView;  //父布局
+    private LinearLayout mllTop;         //toolbar下方ll
+    private RvGroupAdapter mRvGroupAdapter;  //父布局adapter
     private List<SiteModel> siteList = new ArrayList<>();
     private RecyclerView mSearchRv;
     private RvSearchAdapter mRvSearchAdaper;
-    private List<String> mSearchList = new ArrayList<>();
-    private String mSearchStr = "";
+    private List<String> mSearchList = new ArrayList<>();  //搜索文字
+    private String mSearchStr = "";   //搜索文本框内容
     private LinearLayout mllAdd;     //右上角添加按钮
     private LinearLayout mllSearch; //搜索占位框
     private EditText mEdtSearch;   //搜索框
     private TextView mTvSCancel;  //搜索取消按钮
     private LinearLayout mllSearchReal; //搜索框
-    private RelativeLayout mRlSearch;
+    private RelativeLayout mRlSearch; //显示搜索recycleView
     private Context mContext;
-    private TopRightMenu mTopRightMenu;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-    }
+    private TopRightMenu mTopRightMenu; //顶部右侧弹出按钮
 
     @Override
     public void findView() {
@@ -131,7 +127,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     public void setContentLayout() {
         mContext = this;
         setContentView(R.layout.activity_home);
-
     }
 
 
@@ -162,6 +157,8 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     }
 
     private void initSiteAndFloor() {
+
+        siteList.clear();
         File dataFile = new File(Constant.DATA_PATH);
         List<File> fileList = Arrays.asList(dataFile.listFiles());
         int index;
@@ -196,7 +193,10 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
 
     @Override
     public void initView() {
-//        tv_confirm.getPaint().setFlags(Paint. UNDERLINE_TEXT_FLAG);
+        LoadingDialog.with(mContext)
+                .initDialog()
+                .setTouchOutSide(false)
+                .setProgressText("请等待...");
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.setItemViewCacheSize(siteList.size());
         mRvGroupAdapter = new RvGroupAdapter(siteList, this, onMemberItemClickListener);
@@ -208,7 +208,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     @Override
     public void dealLogicAfterInitView() {
         showTopRightMenu();
-
     }
 
     private RvMemberAdapter.OnMemberItemClickListener onMemberItemClickListener = new RvMemberAdapter.OnMemberItemClickListener() {
@@ -306,6 +305,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         }
         if (resultCode == RESULT_OK) {
             if (requestCode == REQUESTCODE_FROM_ACTIVITY) {
+                LoadingDialog.with(mContext).showDialog();
                 String path = data.getStringExtra("path"); //获取返回文件夹路径
                 ArrayList<String> paths = data.getStringArrayListExtra("paths"); //获取返回文件路径 （可以有多个）
                 Log.e("TAG", "path=" + paths.get(0));
@@ -313,11 +313,12 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 if (FileUtils.isZipFile(file)) {
                     ZipUtils.unzip(Constant.DATA_PATH + File.separator + file.getName().substring(0, file.getName().lastIndexOf(".")), file.getPath());
                     // 刷新主界面
-                    initFloorMapsDir();
+                    initSiteAndFloor();
                     mRvGroupAdapter.notifyDataSetChanged();
                 } else {
                     Toast.makeText(mContext, "选择的文件不正确", Toast.LENGTH_SHORT).show();
                 }
+                LoadingDialog.with(mContext).cancelDialog();
 
             }
         }
@@ -496,6 +497,15 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         Toast.makeText(mContext, "该没有蓝牙目录，请选择其他目录", Toast.LENGTH_SHORT).show();
     }
 
+    @Override
+    protected void onDestroy() {
+        if( LoadingDialog.with(mContext).isShowing())
+        {
+            LoadingDialog.with(mContext).cancelDialog();
+        }
+        super.onDestroy();
+    }
+
     /**
      * 打开文件路径选择器
      *
@@ -515,22 +525,21 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     }
 
 
-    private void scanBlueToothFile() {
-        File file = new File(DIRECTION_BLUETOOTH_0);
-        if (file.exists()) //判断文件目录是否存在
-        {
-            MediaScannerConnection.scanFile(mContext, new String[]{DIRECTION_BLUETOOTH_0}, null, null); //扫描文件
-            return;
+          private void scanBlueToothFile() {
+            File file = new File(DIRECTION_BLUETOOTH_0);
+            if (file.exists()) //判断文件目录是否存在
+            {
+                MediaScannerConnection.scanFile(mContext, new String[]{DIRECTION_BLUETOOTH_0}, null, null); //扫描文件
+                return;
+            }
+            File file2 = new File(DIRECTION_BLUETOOTH_1);
+            if (file2.exists()) {
+                MediaScannerConnection.scanFile(mContext, new String[]{DIRECTION_BLUETOOTH_1}, null, null); //扫描文件
+                return;
+            }
+
+
         }
-        File file2 = new File(DIRECTION_BLUETOOTH_1);
-        if (file2.exists()) {
-            MediaScannerConnection.scanFile(mContext, new String[]{DIRECTION_BLUETOOTH_1}, null, null); //扫描文件
-            return;
-        }
-
-
-    }
-
 
 
 }
