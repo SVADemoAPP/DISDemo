@@ -1,6 +1,5 @@
 package com.gyr.disvisibledemo.activity;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -34,25 +33,17 @@ import com.gyr.disvisibledemo.framework.activity.BaseActivity;
 import com.gyr.disvisibledemo.util.BlueUntils;
 import com.gyr.disvisibledemo.util.Constant;
 import com.gyr.disvisibledemo.util.FileUtils;
-import com.gyr.disvisibledemo.util.ZipUtils;
 import com.gyr.disvisibledemo.util.ZipUtils2;
 import com.gyr.disvisibledemo.view.popup.LoadingDialog;
 import com.leon.lfilepickerlibrary.LFilePicker;
-import com.tbruyelle.rxpermissions2.Permission;
-import com.tbruyelle.rxpermissions2.RxPermissions;
 import com.zaaach.toprightmenu.MenuItem;
 import com.zaaach.toprightmenu.TopRightMenu;
-
-import org.xutils.common.util.LogUtil;
-import org.xutils.x;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import io.reactivex.functions.Consumer;
 
 public class HomeActivity extends BaseActivity implements View.OnClickListener {
     private static final int REQUESTCODE_FROM_ACTIVITY = 1000;  //选择文件返回code
@@ -327,6 +318,9 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 }
 //                LoadingDialog.with(mContext).cancelDialog();
 
+            }else if(requestCode==300)
+            {
+                Log.e("XHF","选择文件");
             }
         }
     }
@@ -363,14 +357,11 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 break;
             case R.id.ll_search:
                 setSearch(true); //显示搜索
-//                showSearchPop();
                 break;
             case R.id.search_cancel:
                 mEdtSearch.setText("");
                 setSearch(false); //显示搜索占位View
                 break;
-//                case R.id:
-//            break;
             default:
                 break;
         }
@@ -472,7 +463,9 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                                             runOnUiThread(new Runnable() {
                                                 @Override
                                                 public void run() {
-                                                    openFileSelector(DIRECTION_ROOT, "文件选择"); //打开文件根目录
+//                                                    openFileSelector(DIRECTION_ROOT, "文件选择"); //打开文件根目录
+                                                    Intent intent=new Intent(mContext, FileSearchActivity.class);
+                                                    startActivityForResult(intent,300);
                                                 }
                                             });
                                         } catch (InterruptedException e) {
