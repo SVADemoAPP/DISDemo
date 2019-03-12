@@ -7,10 +7,14 @@
     <LinearLayout
         android:id="@+id/back"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
         android:layout_marginLeft="10dp"
+        android:background="@drawable/selector_toolbar_bg"
+        android:clickable="true"
         android:gravity="center_vertical"
         android:orientation="horizontal"
+        android:padding="5dp"
         android:visibility="gone">
 
         <ImageView
@@ -24,7 +28,7 @@
             android:layout_marginLeft="5dp"
             android:text="返回"
             android:textColor="@color/white"
-            android:textSize="12dp" />
+            android:textSize="14dp" />
     </LinearLayout>
 
 
@@ -35,17 +39,20 @@
         android:layout_centerInParent="true"
         android:text="Dis可视化APP"
         android:textColor="@color/white"
-
         android:textSize="17dp" />
 
     <LinearLayout
         android:id="@+id/tool_right_add"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
-        android:layout_marginRight="10dp"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="5dp"
+        android:background="@drawable/selector_toolbar_bg"
+        android:clickable="true"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="3dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -59,6 +66,7 @@
             android:id="@+id/tool_right_"
             android:layout_width="13dp"
             android:layout_height="13dp"
+            android:layout_marginRight="5dp"
             android:src="@mipmap/tool_add_icon" />
     </LinearLayout>
 </RelativeLayout>

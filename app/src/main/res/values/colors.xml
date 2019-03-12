@@ -2,7 +2,7 @@
 <resources>
     <color name="colorPrimary">#3e3d41</color>
     <color name="colorPrimaryDark">#3e3d41</color>
-    <color name="colorAccent">#ffff</color>
+    <color name="colorAccent">#09bb07</color>
 
     <color name="home_text_color">#00eefd</color>
     <color name="group_text_color">#223f5c</color>
@@ -15,8 +15,9 @@
     <color name="search_text">#FFBBB9B9</color>
     <color name="level1">#09bb07</color>
     <color name="black">#000000</color>
-    <color name="line_bg">#E5E8E8</color>
+    <color name="line_bg">#B7B9B9</color>
     <color name="search_pop_text">#666666</color>
     <color name="transport_pop">#BA000000</color>
     <color name="line_gray2">#5c5b5b</color>
+    <color name="colorPrimary_Dark">#2E2D30</color>
 </resources>

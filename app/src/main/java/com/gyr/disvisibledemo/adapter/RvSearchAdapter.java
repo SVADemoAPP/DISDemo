@@ -30,8 +30,7 @@ public class RvSearchAdapter extends RecyclerView.Adapter<RvSearchAdapter.MyView
 
     @Override
     public MyViewHolder onCreateViewHolder( ViewGroup viewGroup, int i) {
-        View view=LayoutInflater.from(mContext)
-                .inflate(R.layout.item_rv_search,viewGroup,false);
+        View view=LayoutInflater.from(mContext).inflate(R.layout.item_rv_search,viewGroup,false);
         MyViewHolder holder=new MyViewHolder(view);
         return holder;
     }

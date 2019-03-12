@@ -47,6 +47,7 @@ import java.util.List;
 
 public class HomeActivity extends BaseActivity implements View.OnClickListener {
     private static final int REQUESTCODE_FROM_ACTIVITY = 1000;  //选择文件返回code
+    private static final int REQUESTCODE_SELECTOR_FILE = 300;//在文件搜索activity返回
     private static final String DIRECTION_ROOT = Environment.getExternalStorageDirectory().getAbsolutePath(); //文件根目录
     private static final String DIRECTION_BLUETOOTH_0 = DIRECTION_ROOT + File.separator + "Bluetooth/"; //蓝牙路径1  路径不区分大小写
     private static final String DIRECTION_BLUETOOTH_1 = DIRECTION_ROOT + File.separator + "Download/Bluetooth/"; //蓝牙路径2
@@ -299,29 +300,36 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         }
         if (resultCode == RESULT_OK) {
             if (requestCode == REQUESTCODE_FROM_ACTIVITY) {
-//                LoadingDialog.with(mContext).showDialog();
-                String path = data.getStringExtra("path"); //获取返回文件夹路径
                 ArrayList<String> paths = data.getStringArrayListExtra("paths"); //获取返回文件路径 （可以有多个）
-                Log.e("TAG", "path=" + paths.get(0));
                 File file = new File(paths.get(0));
-                if (FileUtils.isZipFile(file)) {
-                    try {
-                        ZipUtils2.UnZipFolder( file.getPath(),Constant.DATA_PATH );
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    // 刷新主界面
-                    initSiteAndFloor();
-                    mRvGroupAdapter.notifyDataSetChanged();
-                } else {
-                    Toast.makeText(mContext, "选择的文件不正确", Toast.LENGTH_SHORT).show();
-                }
-//                LoadingDialog.with(mContext).cancelDialog();
-
-            }else if(requestCode==300)
-            {
-                Log.e("XHF","选择文件");
+                UnZipData(file); //解压文件
+            } else if (requestCode == REQUESTCODE_SELECTOR_FILE) {
+                String filePath = data.getStringExtra("filePath");
+                Toast.makeText(mContext, "选择" + filePath, Toast.LENGTH_SHORT).show(); //todo
+                File file = new File(filePath);
+                UnZipData(file); //解压文件
             }
+        }
+    }
+
+    /**
+     * 解压选择的文件
+     *
+     * @param file
+     */
+    private void UnZipData(File file) {
+        if (FileUtils.isZipFile(file)) {
+            try {
+                ZipUtils2.UnZipFolder(file.getPath(), Constant.DATA_PATH);
+            } catch (Exception e) {
+                Log.e("XHF_ERROR", "zip=" + e.toString());
+                Toast.makeText(mContext, "文件解析出错，请核对是否是该文件", Toast.LENGTH_SHORT).show();
+            }
+            // 刷新主界面
+            initSiteAndFloor();
+            mRvGroupAdapter.notifyDataSetChanged();
+        } else {
+            Toast.makeText(mContext, "选择的文件不正确", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -329,8 +337,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         String basePath = Constant.DATA_PATH + File.separator;
         String path = basePath + siteName + ".zip";
         try {
-//            ZipUtils.zipDirectory(basePath + siteName);
-            ZipUtils2.ZipFolder(basePath + siteName,path);
+            ZipUtils2.ZipFolder(basePath + siteName, path);
         } catch (IOException e) {
             showToast("文件压缩失败");
         } catch (Exception e) {
@@ -353,7 +360,12 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.tool_right_add:
-                mTopRightMenu.showAsDropDown(mllAdd, -225, 0);    //带偏移量
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                mTopRightMenu.showAsDropDown(mllAdd, -200, 0);    //带偏移量
                 break;
             case R.id.ll_search:
                 setSearch(true); //显示搜索
@@ -464,8 +476,8 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                                                 @Override
                                                 public void run() {
 //                                                    openFileSelector(DIRECTION_ROOT, "文件选择"); //打开文件根目录
-                                                    Intent intent=new Intent(mContext, FileSearchActivity.class);
-                                                    startActivityForResult(intent,300);
+                                                    Intent intent = new Intent(mContext, FileSearchActivity.class);
+                                                    startActivityForResult(intent, 300);
                                                 }
                                             });
                                         } catch (InterruptedException e) {

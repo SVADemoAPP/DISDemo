@@ -1,6 +1,7 @@
 package com.gyr.disvisibledemo.activity;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
@@ -51,10 +52,15 @@ public class FileSearchActivity extends BaseActivity implements View.OnClickList
     private SearchZipAdapter mSearchZipAdapter;
     private List<ZipFile> mZipFiles = new ArrayList<>();//查询出来的文件
     private List<ZipFile> mMatch = new ArrayList<>();
+    private boolean mScanFlag=false;
     private Handler mHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
-            LoadingDialog.with(mContext).cancelDialog();
+            mScanFlag=true;
+            if(LoadingDialog.with(FileSearchActivity.this).isShowing())
+            {
+                LoadingDialog.with(FileSearchActivity.this).cancelDialog();
+            }
             //接收结果
             List<String> list = (List<String>) msg.obj;
             //后续显示处理
@@ -73,13 +79,20 @@ public class FileSearchActivity extends BaseActivity implements View.OnClickList
         if (hasFocus) {
             if (!mFirst) //判断是否是第一次进入
             {
-                LoadingDialog.with(mContext)
-                        .setProgressText("正在初始化...")
-                        .setTouchOutSide(false)
-                        .showDialog();
                 scanFile();
                 mFirst = true;
             }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(!mScanFlag) //没有扫描完成
+        {
+            LoadingDialog.with(FileSearchActivity.this)
+                    .setProgressText("正在初始化...")
+                    .showDialog();
         }
     }
 
@@ -164,6 +177,10 @@ public class FileSearchActivity extends BaseActivity implements View.OnClickList
             @Override
             public void setOnItemClick(String path) {
                 Log.e("XHF_HH", "path=" + path);
+                Intent intent = new Intent();
+                intent.putExtra("filePath", path);
+                setResult(RESULT_OK, intent);
+                finish();
             }
         });
     }
@@ -206,7 +223,6 @@ public class FileSearchActivity extends BaseActivity implements View.OnClickList
             case R.id.back:
                 finish();
                 break;
-
             case R.id.ll_search:
                 setSearch(true);
                 break;
@@ -267,9 +283,21 @@ public class FileSearchActivity extends BaseActivity implements View.OnClickList
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (LoadingDialog.with(mContext).isShowing()) {
-            LoadingDialog.with(mContext).cancelDialog();
+        setResult(RESULT_CANCELED);
+        if (LoadingDialog.with(FileSearchActivity.this).isShowing()) {
+            LoadingDialog.with(FileSearchActivity.this).cancelDialog();
         }
+    }
+
+
+    /**
+     * 物理返回键
+     */
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        setResult(RESULT_CANCELED);
+        finish();
     }
 
     /**

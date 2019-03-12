@@ -45,6 +45,11 @@ public class RvMemberAdapter extends RecyclerView.Adapter<RvMemberAdapter.MyView
         holder.ll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 onMemberItemClickListener.memberClick(floorList.get(position).floorMap,0);
             }
         });

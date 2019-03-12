@@ -2,8 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/title_p"
     android:layout_width="match_parent"
-    android:layout_height="42dp"
-    android:background="@drawable/file_search_bg_selector"
+    android:layout_height="50dp"
+    android:background="@drawable/selector_file_search_bg"
     android:clickable="true"
     android:orientation="vertical">
 
@@ -19,7 +19,7 @@
         android:singleLine="true"
         android:text="member1"
         android:textColor="@color/search_pop_text"
-        android:textSize="15dp" />
+        android:textSize="17dp" />
 
     <View
         android:layout_width="match_parent"
