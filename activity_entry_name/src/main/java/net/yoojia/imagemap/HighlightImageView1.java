@@ -52,11 +52,13 @@ public class HighlightImageView1 extends TouchImageView1 implements ShapeExtensi
             @Override
             public void startTranslate(float x, float y) {
                 boolean flag = false;
+
                 for (Shape shape : shapesCache.values()) {
                     if (shape.inArea(x, y) && shape instanceof PrruInfoShape) {
                         flag = true;
                         templePrru = (PrruInfoShape) shape;
                         hListener.startTranslate((PrruInfoShape) shape, x, y);
+
                     }
                 }
                 if (!flag) {
@@ -77,6 +79,19 @@ public class HighlightImageView1 extends TouchImageView1 implements ShapeExtensi
                     hListener.endTranslate(templePrru, x, y);
                 }
                 templePrru = null;
+            }
+
+            @Override
+            public void touchOutside(float x, float y) {  //判断是否是除开prru的外部包括图片以外
+                boolean flag=false;
+                for (Shape shape : shapesCache.values()) {
+                    if (shape.inArea(x, y) && shape instanceof PrruInfoShape) {
+                        flag=true;
+                    }
+                }
+                if(!flag){
+                    hListener.clickOutSide();
+                }
             }
         });
     }
@@ -314,6 +329,8 @@ public class HighlightImageView1 extends TouchImageView1 implements ShapeExtensi
         void endTranslate(PrruInfoShape shape, float x, float y);
 
         void clickBlank();
+        void clickOutSide();
+
     }
 
 

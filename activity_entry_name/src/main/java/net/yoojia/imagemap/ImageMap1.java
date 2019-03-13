@@ -39,7 +39,15 @@ public class ImageMap1 extends FrameLayout implements ShapeExtension, OnShapeAct
     private OnShapeActionListener mOnShapeClickListener;
     private View view;
     private View viewForAnimation;
+    private boolean showBubble=true;
 
+    public boolean getShowBubble() {
+        return showBubble;
+    }
+
+    public void setShowBubble(boolean showBubble) {
+        this.showBubble = showBubble;
+    }
 
     public void setPrruListener(HighlightImageView1.PrruModifyHListener prruModifyListener) {
         highlightImageView.setPRRUMoveHListener(prruModifyListener);
@@ -154,6 +162,10 @@ public class ImageMap1 extends FrameLayout implements ShapeExtension, OnShapeAct
             return this.bubble.getBubblePosition();
         }
         return this.defaultPoint;
+    }
+
+    public View getBubble() {
+        return view;
     }
 
     public float getZoom() {
@@ -320,10 +332,11 @@ public class ImageMap1 extends FrameLayout implements ShapeExtension, OnShapeAct
             }
             if (this.bubble != null) {
                 this.bubble.showAtShape(shape);
-                if (!shape.getMove()) {
-                    this.view.setVisibility(View.VISIBLE);
+                if (showBubble) {
+                    if (!shape.getMove()) {
+                        this.view.setVisibility(View.VISIBLE);
+                    }
                 }
-
             }
         }
     }

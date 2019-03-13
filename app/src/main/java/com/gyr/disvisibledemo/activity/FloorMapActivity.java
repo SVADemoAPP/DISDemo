@@ -86,7 +86,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     private String mapPath;
     private PrruInfoShape tempPrruInfoShape;
     private PrruInfoShape redPrruInfoShape;
-
+//    private boolean  mShowBubble=true; //默认
     @Override
     public void findView() {
         mFloorMap = findViewById(R.id.imagemap);
@@ -163,11 +163,19 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
 
             @Override
             public void clickBlank() {
-                if (tempPrruInfoShape != null) { //只有在调整事件触发的时候才有
+
+
+            }
+
+            @Override
+            public void clickOutSide() {  //判断是点击除开prru的外部
+                mFloorMap.getBubble().setVisibility(View.GONE);
+                if (tempPrruInfoShape != null) { //只有在调整事件触发的时候才有  点击空的没有prrushape的位置
                     mFloorMap.removeShape("temp"); //移除红色
                     mFloorMap.addShape(tempPrruInfoShape, false);//还原
                     tempPrruInfoShape = null;
                     showToast("已取消调整");
+                    mFloorMap.setShowBubble(true);
                 }
             }
         });
@@ -245,7 +253,8 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                     mMenuView.setVisibility(View.GONE);
                     tempPrruInfoShape = mNowSelectPrru;
                     mFloorMap.removeShape(mNowSelectPrru.getTag());
-                    Toast.makeText(mContext, "请长按红色pRRU进行位置修改", Toast.LENGTH_SHORT).show();
+                    mFloorMap.setShowBubble(false);
+                    showToast("请长按红色pRRU进行位置修改");
                     break;
                 case R.id.menu_camera:
                     openCamera();
@@ -544,6 +553,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                         tempPrruInfoShape.setValues(redPrruInfoShape.getCenterX(), redPrruInfoShape.getCenterY());
                         mFloorMap.removeShape("temp"); //移除红色
                         mFloorMap.addShape(tempPrruInfoShape, false);//还原
+                        mFloorMap.setShowBubble(true);
                     }
                 });
         normalDialog.setNegativeButton("取消",
@@ -554,6 +564,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                         mFloorMap.removeShape("temp"); //移除红色
                         mFloorMap.addShape(tempPrruInfoShape, false);//还原
                         tempPrruInfoShape = null;
+                        mFloorMap.setShowBubble(true);
                     }
                 });
         // 显示
