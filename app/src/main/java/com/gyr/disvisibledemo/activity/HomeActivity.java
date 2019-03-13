@@ -53,67 +53,17 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     private static final String DIRECTION_BLUETOOTH_1 = DIRECTION_ROOT + File.separator + "Download/Bluetooth/"; //蓝牙路径2
 
     private RecyclerView mRecyclerView;  //父布局
-    private LinearLayout mllTop;         //toolbar下方ll
     private RvGroupAdapter mRvGroupAdapter;  //父布局adapter
     private List<SiteModel> siteList = new ArrayList<>();
-    private RecyclerView mSearchRv;
-    private RvSearchAdapter mRvSearchAdaper;
-    private List<String> mSearchList = new ArrayList<>();  //搜索文字
-    private String mSearchStr = "";   //搜索文本框内容
     private LinearLayout mllAdd;     //右上角添加按钮
-    private LinearLayout mllSearch; //搜索占位框
-    private EditText mEdtSearch;   //搜索框
-    private TextView mTvSCancel;  //搜索取消按钮
-    private LinearLayout mllSearchReal; //搜索框
-    private RelativeLayout mRlSearch; //显示搜索recycleView
     private Context mContext;
     private TopRightMenu mTopRightMenu; //顶部右侧弹出按钮
 
     @Override
     public void findView() {
         mRecyclerView = findViewById(R.id.rv_group);
-        mllTop = findViewById(R.id.ll_top);
         mllAdd = findViewById(R.id.tool_right_add);
-        mllSearch = findViewById(R.id.ll_search);
-        mEdtSearch = findViewById(R.id.edt_search);
-        mTvSCancel = findViewById(R.id.search_cancel);
-        mllSearchReal = findViewById(R.id.ll_search_rl);
-        mRlSearch = findViewById(R.id.rl_search_pop);
-        mSearchRv = findViewById(R.id.search_rv);
-
         mllAdd.setOnClickListener(this);
-        mllTop.setOnClickListener(this);
-        mllSearch.setOnClickListener(this);
-        mTvSCancel.setOnClickListener(this);
-        mEdtSearch.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                //监听搜索框的输入变化完成之后的逻辑
-                mSearchStr = s.toString();
-                int len = mSearchStr.length();
-                if (len == 0) {
-                    mSearchList.clear();
-                } else {
-                    mSearchList.clear();
-                    for (int i = 0; i < len; i++) {
-                        mSearchList.add(mSearchStr + "_" + i);
-                    }
-
-                }
-                mRvSearchAdaper.notifyDataSetChanged();
-            }
-
-        });
     }
 
     @Override
@@ -132,25 +82,9 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         if (!photosDir.exists()) {
             photosDir.mkdirs();
         }
-        /*if (SharedPrefHelper.getBoolean(this, "isFirst", true)) {
-            SharedPrefHelper.putBoolean(this, "isFirst", false);
-            for (int i = 0; i < 5; i++) {
-                File mapFile = new File(Constant.SD_PATH + "/maps/floor_" + i + ".png");
-                if (!mapFile.exists()) {
-                    try {
-                        mapFile.createNewFile();
-                        FileUtils.writeBytesToFile(this.getAssets().open("floor_" + i + ".png"), mapFile);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-        }*/
     }
 
     private void initSiteAndFloor() {
-
         siteList.clear();
         File dataFile = new File(Constant.DATA_PATH);
         List<File> fileList = Arrays.asList(dataFile.listFiles());
@@ -197,7 +131,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         mRvGroupAdapter = new RvGroupAdapter(siteList, this, onMemberItemClickListener);
         mRvGroupAdapter.setOnGroupItemClickListener(onGroupItemClickListener);
         mRecyclerView.setAdapter(mRvGroupAdapter);
-        initSearchPop();
+
     }
 
     @Override
@@ -215,17 +149,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         }
     };
 
-    private void initSearchPop() {
-        mSearchRv.setLayoutManager(new LinearLayoutManager(HomeActivity.this));
-        mRvSearchAdaper = new RvSearchAdapter(mSearchList, HomeActivity.this);
-        mRvSearchAdaper.setOnSearchItemClickListener(new RvSearchAdapter.OnSearchItemClickListener() {
-            @Override
-            public void searchClick(String str) {
-                showToast("搜索单击回调：" + str);
-            }
-        });
-        mSearchRv.setAdapter(mRvSearchAdaper);
-    }
+
 
     private RvGroupAdapter.OnGroupItemClickListener onGroupItemClickListener = new RvGroupAdapter.OnGroupItemClickListener() {
         @Override
@@ -365,65 +289,13 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                mTopRightMenu.showAsDropDown(mllAdd, -200, 0);    //带偏移量
-                break;
-            case R.id.ll_search:
-                setSearch(true); //显示搜索
-                break;
-            case R.id.search_cancel:
-                mEdtSearch.setText("");
-                setSearch(false); //显示搜索占位View
+                mTopRightMenu.showAsDropDown(mllAdd, -200, 20);    //带偏移量
                 break;
             default:
                 break;
         }
     }
 
-    /**
-     * 搜索框与占位View的切换
-     *
-     * @param flag
-     */
-    private void setSearch(boolean flag) {
-        if (flag)  //显示搜索
-        {
-            mllSearch.setVisibility(View.GONE);
-            mllSearchReal.setVisibility(View.VISIBLE);
-            showSoftInputFromWindow(mEdtSearch);
-            mRlSearch.setVisibility(View.VISIBLE);
-        } else {    //显示占位View
-            mllSearch.setVisibility(View.VISIBLE);
-            mllSearchReal.setVisibility(View.GONE);
-            hideSoftInputFromWindow(mEdtSearch);
-            mRlSearch.setVisibility(View.GONE);
-        }
-    }
-
-
-    /**
-     * 显示键盘
-     *
-     * @param editText
-     */
-    private void showSoftInputFromWindow(EditText editText) {
-        editText.setFocusable(true);
-        editText.setFocusableInTouchMode(true);
-        editText.requestFocus();
-        InputMethodManager inputManager = (InputMethodManager) editText.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        inputManager.showSoftInput(editText, 0);
-    }
-
-    /**
-     * 隐藏键盘
-     *
-     * @param editText
-     */
-    private void hideSoftInputFromWindow(EditText editText) {
-        editText.setFocusable(false);
-        editText.setFocusableInTouchMode(false);
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(0, InputMethodManager.HIDE_NOT_ALWAYS);
-    }
 
     /**
      * 初始化topRightmenu
@@ -535,23 +407,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 .withIsGreater(false)
                 .withFileSize(500 * 1024 * 10)   //文件大小过滤器
                 .start();
-    }
-
-
-    private void scanBlueToothFile() {
-        File file = new File(DIRECTION_BLUETOOTH_0);
-        if (file.exists()) //判断文件目录是否存在
-        {
-            MediaScannerConnection.scanFile(mContext, new String[]{DIRECTION_BLUETOOTH_0}, null, null); //扫描文件
-            return;
-        }
-        File file2 = new File(DIRECTION_BLUETOOTH_1);
-        if (file2.exists()) {
-            MediaScannerConnection.scanFile(mContext, new String[]{DIRECTION_BLUETOOTH_1}, null, null); //扫描文件
-            return;
-        }
-
-
     }
 
 

@@ -52,13 +52,12 @@ public class FileSearchActivity extends BaseActivity implements View.OnClickList
     private SearchZipAdapter mSearchZipAdapter;
     private List<ZipFile> mZipFiles = new ArrayList<>();//查询出来的文件
     private List<ZipFile> mMatch = new ArrayList<>();
-    private boolean mScanFlag=false;
+    private boolean mScanFlag = false;
     private Handler mHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
-            mScanFlag=true;
-            if(LoadingDialog.with(FileSearchActivity.this).isShowing())
-            {
+            mScanFlag = true;
+            if (LoadingDialog.with(FileSearchActivity.this).isShowing()) {
                 LoadingDialog.with(FileSearchActivity.this).cancelDialog();
             }
             //接收结果
@@ -73,26 +72,28 @@ public class FileSearchActivity extends BaseActivity implements View.OnClickList
     };
     private RecyclerView mSearchZipRl;
 
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) {
-            if (!mFirst) //判断是否是第一次进入
-            {
-                scanFile();
-                mFirst = true;
-            }
-        }
-    }
+//    @Override
+//    public void onWindowFocusChanged(boolean hasFocus) {
+//        super.onWindowFocusChanged(hasFocus);
+//        if (hasFocus) {
+//
+//        }
+//    }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if(!mScanFlag) //没有扫描完成
+        if (!mScanFlag) //没有扫描完成
         {
             LoadingDialog.with(FileSearchActivity.this)
                     .setProgressText("正在初始化...")
                     .showDialog();
+
+        }
+        if (!mFirst) //判断是否是第一次进入
+        {
+            scanFile();
+            mFirst = true;
         }
     }
 
