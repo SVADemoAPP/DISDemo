@@ -57,9 +57,9 @@ public class FileSearchActivity extends BaseActivity implements View.OnClickList
         @Override
         public void handleMessage(Message msg) {
             mScanFlag = true;
-            if (LoadingDialog.with(FileSearchActivity.this).isShowing()) {
-                LoadingDialog.with(FileSearchActivity.this).cancelDialog();
-            }
+//            if (LoadingDialog.with(FileSearchActivity.this).isShowing()) {
+//                LoadingDialog.with(FileSearchActivity.this).cancelDialog();
+//            }
             //接收结果
             List<String> list = (List<String>) msg.obj;
             //后续显示处理
@@ -85,9 +85,9 @@ public class FileSearchActivity extends BaseActivity implements View.OnClickList
         super.onResume();
         if (!mScanFlag) //没有扫描完成
         {
-            LoadingDialog.with(FileSearchActivity.this)
-                    .setProgressText("正在初始化...")
-                    .showDialog();
+//            LoadingDialog.with(FileSearchActivity.this)
+//                    .setProgressText("正在初始化...")
+//                    .showDialog();
 
         }
         if (!mFirst) //判断是否是第一次进入
@@ -285,9 +285,9 @@ public class FileSearchActivity extends BaseActivity implements View.OnClickList
     protected void onDestroy() {
         super.onDestroy();
         setResult(RESULT_CANCELED);
-        if (LoadingDialog.with(FileSearchActivity.this).isShowing()) {
-            LoadingDialog.with(FileSearchActivity.this).cancelDialog();
-        }
+//        if (LoadingDialog.with(FileSearchActivity.this).isShowing()) {
+//            LoadingDialog.with(FileSearchActivity.this).cancelDialog();
+//        }
     }
 
 

@@ -16,12 +16,13 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
-import android.view.View.OnTouchListener;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 
 import com.nineoldandroids.animation.AnimatorSet;
+
 import net.yoojia.imagemap.animator.MapHandle;
 import net.yoojia.imagemap.animator.MapHandleImp;
+import net.yoojia.imagemap.core.PrruInfoShape;
 import net.yoojia.imagemap.core.Shape;
 import net.yoojia.imagemap.event.RotateGestureDetector;
 import net.yoojia.imagemap.event.RotateGestureDetector.SimpleOnRotateGestureListener;
@@ -57,6 +58,11 @@ public class TouchImageView1 extends android.support.v7.widget.AppCompatImageVie
     private MyOnTouchListener myOnTouchListener;
     private float saveRotate;
     private OnTouchListener touchListener;
+    private PrruModifyListener pRUUlistener;
+
+    public void setPRRUMoveListener(PrruModifyListener moveListener) {
+        pRUUlistener = moveListener;
+    }
 
     private enum GestureMode {
         toMove,
@@ -178,6 +184,8 @@ public class TouchImageView1 extends android.support.v7.widget.AppCompatImageVie
         this.isNewImageSVG = true;
         this.curGestureMode = GestureMode.none;
         this.touchListener = new OnTouchListener() {
+            private PointF singlePoint;
+            private PointF rlPoint;
             static final float MAX_VELOCITY = 1.2f;
             private PointF curPoint = new PointF();
             private long dragTime;
@@ -213,7 +221,7 @@ public class TouchImageView1 extends android.support.v7.widget.AppCompatImageVie
                     TouchImageView1.this.mRotateGestureDetector.onTouchEvent(event);
                 }
                 switch (event.getAction() & 255) {
-                    case 0:
+                    case MotionEvent.ACTION_DOWN:
                         this.mDownPoint = new PointF(event.getX(), event.getY());
                         TouchImageView1.this.downPoint = TouchImageView1.this.mImageViewHelper.getSinglePoint(TouchImageView1.this.imageUsingMatrix, TouchImageView1.this.saveRotate, this.mDownPoint);
                         TouchImageView1.this.bLongClick = false;
@@ -221,8 +229,18 @@ public class TouchImageView1 extends android.support.v7.widget.AppCompatImageVie
                             TouchImageView1.this.myOnTouchListener.onTouch(true);
                             break;
                         }
+                        if (mImageViewHelper.pointInArea(imageUsingMatrix, saveRotate, curPoint)) {
+                            rlPoint = new PointF(event.getX(), event.getY());
+                            singlePoint = mImageViewHelper.getSinglePoint(imageUsingMatrix, saveRotate, rlPoint);
+                            pRUUlistener.startTranslate(singlePoint.x, singlePoint.y);
+                        }
                         break;
-                    case 1:
+                    case MotionEvent.ACTION_UP:
+                        if (mImageViewHelper.pointInArea(imageUsingMatrix, saveRotate, curPoint)) {
+                            rlPoint = new PointF(event.getX(), event.getY());
+                            singlePoint = mImageViewHelper.getSinglePoint(imageUsingMatrix, saveRotate, rlPoint);
+                            pRUUlistener.endTranslate(singlePoint.x, singlePoint.y); //xhf 获取长按移动xy
+                        }
                         if (TouchImageView1.this.mOnLongClickListener != null && TouchImageView1.this.bLongClick) {
                             TouchImageView1.this.mOnLongClickListener.onLongClick(TouchImageView1.this.longClickShape);
                         }
@@ -231,7 +249,8 @@ public class TouchImageView1 extends android.support.v7.widget.AppCompatImageVie
                             break;
                         }
                         break;
-                    case 2:
+                    case MotionEvent.ACTION_MOVE:
+
                         if (TouchImageView1.this.curGestureMode == GestureMode.drag) {
                             this.mMovePoint.x = event.getX();
                             this.mMovePoint.y = event.getY();
@@ -249,6 +268,11 @@ public class TouchImageView1 extends android.support.v7.widget.AppCompatImageVie
                                 if (TouchImageView1.this.bLongClick) {
                                     this.curPoint.x = event.getX();
                                     this.curPoint.y = event.getY();
+                                    if (mImageViewHelper.pointInArea(imageUsingMatrix, saveRotate, curPoint)) {
+                                        rlPoint = new PointF(event.getX(), event.getY());
+                                        singlePoint = mImageViewHelper.getSinglePoint(imageUsingMatrix, saveRotate, rlPoint);
+                                        pRUUlistener.moveTranslate(singlePoint.x, singlePoint.y); //xhf 获取长按移动xy
+                                    }
                                     if (TouchImageView1.this.mImageViewHelper.pointInArea(TouchImageView1.this.imageUsingMatrix, TouchImageView1.this.saveRotate, this.curPoint)) {
                                         this.point1 = TouchImageView1.this.mImageViewHelper.getSinglePoint(TouchImageView1.this.imageUsingMatrix, TouchImageView1.this.saveRotate, this.curPoint);
                                         TouchImageView1.this.onViewLongClickShapeMove(this.point1.x, this.point1.y);
@@ -261,8 +285,8 @@ public class TouchImageView1 extends android.support.v7.widget.AppCompatImageVie
                             }
                         }
                         break;
-                    case 3:
-                    case 6:
+                    case MotionEvent.ACTION_CANCEL:
+                    case MotionEvent.ACTION_POINTER_UP:
                         if (TouchImageView1.this.curGestureMode == GestureMode.drag) {
                             TouchImageView1.this.curGestureMode = GestureMode.toMove;
                             TouchImageView1.this.inertiaMove();
@@ -371,18 +395,17 @@ public class TouchImageView1 extends android.support.v7.widget.AppCompatImageVie
 
             //这里涉及到缩放问题 。图片的宽高和容器的宽高之间的处理
             //--------------------------xhf 处理图片和容器适配问题---------------------------------
-            float scale =0;
-            float c1=dh*1f/dw;
-            float c2=mView_height*1f/mView_width;
-            if(c2>c1){  //如果容器比例大于图片   相等其实哪个都可以
-                if(mView_width<mView_height)
-                {
-                    scale= mView_width * 1f / dw;
-                }else {
+            float scale = 0;
+            float c1 = dh * 1f / dw;
+            float c2 = mView_height * 1f / mView_width;
+            if (c2 > c1) {  //如果容器比例大于图片   相等其实哪个都可以
+                if (mView_width < mView_height) {
+                    scale = mView_width * 1f / dw;
+                } else {
                     scale = mView_height * 1f / dh;
                 }
-            }else {
-                scale=mView_height*1f/dh;
+            } else {
+                scale = mView_height * 1f / dh;
             }
             //--------------------------xhf 处理图片和容器适配问题---------------------------------
             this.mBaZhanUtil = new BaZhanUtil(0.0f, scale);
@@ -562,5 +585,13 @@ public class TouchImageView1 extends android.support.v7.widget.AppCompatImageVie
 
     public void setOnTouchListener(MyOnTouchListener listener) {
         this.myOnTouchListener = listener;
+    }
+
+    public interface PrruModifyListener {
+        void startTranslate(float x, float y);
+
+        void moveTranslate(float x, float y);
+
+        void endTranslate(float x, float y);
     }
 }

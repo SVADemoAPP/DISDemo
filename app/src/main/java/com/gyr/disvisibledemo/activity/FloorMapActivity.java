@@ -1,6 +1,8 @@
 package com.gyr.disvisibledemo.activity;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -26,9 +28,11 @@ import com.gyr.disvisibledemo.framework.utils.StringUtil;
 import com.gyr.disvisibledemo.util.Constant;
 import com.gyr.disvisibledemo.util.XmlUntils;
 
+import net.yoojia.imagemap.HighlightImageView1;
 import net.yoojia.imagemap.ImageMap1;
 import net.yoojia.imagemap.TouchImageView1;
 import net.yoojia.imagemap.core.Bubble;
+import net.yoojia.imagemap.core.CircleShape;
 import net.yoojia.imagemap.core.CollectPointShape;
 import net.yoojia.imagemap.core.MoniPointShape;
 import net.yoojia.imagemap.core.PushMessageShape;
@@ -56,7 +60,8 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     private int mWidth;
     private int mHeight;
     private Random mRandom = new Random();
-
+    private boolean l1 = false;
+    int num = 0;
     private Context mContext;
     private boolean mFirst = false;
     private View mMenuView;
@@ -79,6 +84,8 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     private String mFileUrl;
     private Bitmap mBitmap;
     private String mapPath;
+    private PrruInfoShape tempPrruInfoShape;
+    private PrruInfoShape redPrruInfoShape;
 
     @Override
     public void findView() {
@@ -117,6 +124,53 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         mHeight = mBitmap.getHeight();
         mFloorMap.setMapBitmap(mBitmap);
         mFloorMap.setAllowRotate(false); //不能转动
+        mFloorMap.setPrruListener(new HighlightImageView1.PrruModifyHListener() {   //监听地图上prru移动事件
+            @Override
+            public void startTranslate(PrruInfoShape shape, float x, float y) {
+                if (tempPrruInfoShape != null) {
+                    Log.e("XHF_start", "x=" + x + "-----y=" + y);
+                    if (!shape.getMove()) {
+                        return;
+                    }
+                    redPrruInfoShape.setValues(x, y);
+                }
+
+            }
+
+            @Override
+            public void moveTranslate(PrruInfoShape shape, float x, float y) {
+                Log.e("XHF_move", "x=" + x + "-----y=" + y);
+                if (tempPrruInfoShape != null) {
+                    if (!shape.getMove()) {
+                        return;
+                    }
+                    redPrruInfoShape.setValues(x, y);
+                }
+            }
+
+            @Override
+            public void endTranslate(PrruInfoShape shape, float x, float y) {
+                Log.e("XHF_end", "x=" + x + "-----y=" + y);
+                if (tempPrruInfoShape != null) {
+                    if (!shape.getMove()) {
+                        return;
+                    }
+                    redPrruInfoShape.setValues(x, y);
+                    showNormalDialog("pRRU位置修改", "确定本次修改？");
+                }
+
+            }
+
+            @Override
+            public void clickBlank() {
+                if (tempPrruInfoShape != null) { //只有在调整事件触发的时候才有
+                    mFloorMap.removeShape("temp"); //移除红色
+                    mFloorMap.addShape(tempPrruInfoShape, false);//还原
+                    tempPrruInfoShape = null;
+                    showToast("已取消调整");
+                }
+            }
+        });
     }
 
     private void getData() {
@@ -135,6 +189,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                     prruInfoShape.setId(XmlUntils.getAttributeValueByName(ne, "id"));
                     prruInfoShape.setValues(Float.parseFloat(XmlUntils.getAttributeValueByName(ne, "x")), Float.parseFloat(XmlUntils.getAttributeValueByName(ne, "y")));
                     prruInfoShape.setBind(false);
+                    prruInfoShape.setMove(false);
                     prruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.outArea);
                     if (StringUtil.isNullOrEmpty(XmlUntils.getAttributeValueByName(ne, "esn"))) {
                         prruInfoShape.setBind(false);
@@ -143,7 +198,15 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                         prruInfoShape.setBind(true);
                         prruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.inArea);
                     }
-                    mFloorMap.addShape(prruInfoShape, false);
+                    if (!l1) {
+                        num++;
+                        if (num == 3) {
+                            l1 = true;
+                        }
+
+                        mFloorMap.addShape(prruInfoShape, false);
+                    }
+
                 }
                 flag = true;
                 break;
@@ -174,7 +237,15 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                     openZxing();
                     break;
                 case R.id.menu_move:
-
+                    float centerX = mNowSelectPrru.getCenterX();  //获取中心点xy
+                    float centerY = mNowSelectPrru.getCenterY();
+                    redPrruInfoShape.setValues(centerX, centerY);
+                    redPrruInfoShape.setMove(true);
+                    mFloorMap.addShape(redPrruInfoShape, false);
+                    mMenuView.setVisibility(View.GONE);
+                    tempPrruInfoShape = mNowSelectPrru;
+                    mFloorMap.removeShape(mNowSelectPrru.getTag());
+                    Toast.makeText(mContext, "请长按红色pRRU进行位置修改", Toast.LENGTH_SHORT).show();
                     break;
                 case R.id.menu_camera:
                     openCamera();
@@ -235,7 +306,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
 
             @Override
             public void onPrruInfoShapeClick(PrruInfoShape prruinfoshape, float f, float f2) {
-                showToast("单击:" + prruinfoshape.getTag());
+//                showToast("单击:" + prruinfoshape.getTag());
                 mNowSelectPrru = prruinfoshape;
             }
 
@@ -259,7 +330,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
             @Override
             public void onLongClick(Shape shape) {
                 if (shape instanceof PrruInfoShape) {
-                    showToast("长按:" + ((PrruInfoShape) shape).getTag());
+//                    showToast("长按:" + ((PrruInfoShape) shape).getTag());
                 }
 
             }
@@ -268,7 +339,8 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
 
     @Override
     public void dealLogicAfterInitView() {
-
+        redPrruInfoShape = new PrruInfoShape("temp", Color.GREEN, mContext);
+        redPrruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.temple);
     }
 
     @Override
@@ -456,5 +528,35 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
             mBitmap.recycle();
             mBitmap = null;
         }
+    }
+
+
+    private void showNormalDialog(String title, String message) {
+        final AlertDialog.Builder normalDialog =
+                new AlertDialog.Builder(mContext);
+        normalDialog.setTitle(title);
+        normalDialog.setMessage(message);
+        normalDialog.setPositiveButton("确定",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        showToast("pRRU位置修改成功");
+                        tempPrruInfoShape.setValues(redPrruInfoShape.getCenterX(), redPrruInfoShape.getCenterY());
+                        mFloorMap.removeShape("temp"); //移除红色
+                        mFloorMap.addShape(tempPrruInfoShape, false);//还原
+                    }
+                });
+        normalDialog.setNegativeButton("取消",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        showToast("已取消修改");
+                        mFloorMap.removeShape("temp"); //移除红色
+                        mFloorMap.addShape(tempPrruInfoShape, false);//还原
+                        tempPrruInfoShape = null;
+                    }
+                });
+        // 显示
+        normalDialog.show();
     }
 }

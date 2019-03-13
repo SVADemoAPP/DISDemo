@@ -7,8 +7,10 @@ import android.graphics.Color;
 import android.graphics.PointF;
 import android.view.View;
 import android.view.View.MeasureSpec;
+
 import net.yoojia.imagemap.R;
 import net.yoojia.imagemap.support.ScaleUtility;
+import net.yoojia.imagemap.util.BaZhanUtil;
 import net.yoojia.imagemap.util.MatrixConverHelper;
 
 public class PrruInfoShape extends Shape {
@@ -27,7 +29,16 @@ public class PrruInfoShape extends Shape {
     private String url;
     private View view_inArea;
     private View view_outArea;
-    private boolean isBind=false;
+    private boolean isBind = false;
+    private boolean isMove = false;
+
+    public boolean getMove() {
+        return isMove;
+    }
+
+    public void setMove(boolean move) {
+        isMove = move;
+    }
 
     public boolean isBind() {
         return isBind;
@@ -39,13 +50,18 @@ public class PrruInfoShape extends Shape {
 
     public enum pRRUType {
         outArea,
-        inArea
+        inArea,
+        temple
     }
 
     static /* synthetic */ int[] $SWITCH_TABLE$net$yoojia$imagemap$core$pRRUInfoShape$pRRUType() {
         int[] iArr = $SWITCH_TABLE$net$yoojia$imagemap$core$pRRUInfoShape$pRRUType;
         if (iArr == null) {
             iArr = new int[pRRUType.values().length];
+            try {
+                iArr[pRRUType.temple.ordinal()] = 3;
+            } catch (NoSuchFieldError e2) {
+            }
             try {
                 iArr[pRRUType.inArea.ordinal()] = 2;
             } catch (NoSuchFieldError e) {
@@ -54,6 +70,7 @@ public class PrruInfoShape extends Shape {
                 iArr[pRRUType.outArea.ordinal()] = 1;
             } catch (NoSuchFieldError e2) {
             }
+
             $SWITCH_TABLE$net$yoojia$imagemap$core$pRRUInfoShape$pRRUType = iArr;
         }
         return iArr;
@@ -88,6 +105,10 @@ public class PrruInfoShape extends Shape {
         return this.tag;
     }
 
+    public void setTransport() {
+        bmp_show = BaZhanUtil.getTransparentBitmap(bmp_show, 50);
+    }
+
     public void setPrruShowType(pRRUType type) {
         switch ($SWITCH_TABLE$net$yoojia$imagemap$core$pRRUInfoShape$pRRUType()[type.ordinal()]) {
             case 1:
@@ -101,6 +122,14 @@ public class PrruInfoShape extends Shape {
             case 2:
                 if (this.view_inArea == null) {
                     this.view_inArea = View.inflate(this.context, R.layout.prru_in_area, null);
+                    this.bmp_inArea = convertViewToBitmap(this.view_inArea);
+                }
+                setRadius((float) ((this.bmp_inArea.getWidth() / 2) + 90));
+                this.bmp_show = this.bmp_inArea;
+                return;
+            case 3:
+                if (this.view_inArea == null) {
+                    this.view_inArea = View.inflate(this.context, R.layout.prru_red, null);
                     this.bmp_inArea = convertViewToBitmap(this.view_inArea);
                 }
                 setRadius((float) ((this.bmp_inArea.getWidth() / 2) + 90));
@@ -175,7 +204,7 @@ public class PrruInfoShape extends Shape {
         float dx = p.x - x;
         float dy = p.y - y;
         float sqrt = (float) Math.sqrt((double) ((dx * dx) + (dy * dy)));
-        if ( sqrt< r) {
+        if (sqrt < r) {
             return true;
         }
         return false;

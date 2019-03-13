@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.FrameLayout;
 
 import com.caverock.androidsvg.SVG;
+
 import net.yoojia.imagemap.TouchImageView1.MyOnTouchListener;
 import net.yoojia.imagemap.TouchImageView1.OnLongClickListener1;
 import net.yoojia.imagemap.TouchImageView1.OnRotateListener;
@@ -39,6 +40,11 @@ public class ImageMap1 extends FrameLayout implements ShapeExtension, OnShapeAct
     private View view;
     private View viewForAnimation;
 
+
+    public void setPrruListener(HighlightImageView1.PrruModifyHListener prruModifyListener) {
+        highlightImageView.setPRRUMoveHListener(prruModifyListener);
+    }
+
     public ImageMap1(Context context) {
         this(context, null);
         this.mContext = context;
@@ -54,6 +60,10 @@ public class ImageMap1 extends FrameLayout implements ShapeExtension, OnShapeAct
         super(context, attrs, defStyle);
         this.defaultPoint = new PointF(0.0f, 0.0f);
         initialImageView(context);
+    }
+
+    public HighlightImageView1 getHighlightImageView() {
+        return this.highlightImageView;
     }
 
     private void initialImageView(Context context) {
@@ -304,14 +314,19 @@ public class ImageMap1 extends FrameLayout implements ShapeExtension, OnShapeAct
 
     public void onPrruInfoShapeClick(PrruInfoShape shape, float xOnImage, float yOnImage) {
         if (this.mOnShapeClickListener != null) {
-           mOnShapeClickListener.onPrruInfoShapeClick(shape, xOnImage, yOnImage);
+            mOnShapeClickListener.onPrruInfoShapeClick(shape, xOnImage, yOnImage);
             for (Shape item : this.highlightImageView.getShapes()) {
                 item.cleanBubbleRelation();
             }
             if (this.bubble != null) {
                 this.bubble.showAtShape(shape);
-                this.view.setVisibility(View.VISIBLE);
+                if (!shape.getMove()) {
+                    this.view.setVisibility(View.VISIBLE);
+                }
+
             }
         }
     }
+
+
 }

@@ -9,11 +9,14 @@ import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
+
 import com.caverock.androidsvg.SVG;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import net.yoojia.imagemap.core.CollectPointShape;
 import net.yoojia.imagemap.core.LineShape;
 import net.yoojia.imagemap.core.MoniPointShape;
@@ -41,6 +44,42 @@ public class HighlightImageView1 extends TouchImageView1 implements ShapeExtensi
     private OnShapeActionListener onShapeClickListener;
     private PrruInfoShape pInfoShapeNew;
     private Map<Object, Shape> shapesCache;
+
+    private PrruInfoShape templePrru = null;
+
+    public void setPRRUMoveHListener(final PrruModifyHListener hListener) {
+        setPRRUMoveListener(new PrruModifyListener() {
+            @Override
+            public void startTranslate(float x, float y) {
+                boolean flag = false;
+                for (Shape shape : shapesCache.values()) {
+                    if (shape.inArea(x, y) && shape instanceof PrruInfoShape) {
+                        flag = true;
+                        templePrru = (PrruInfoShape) shape;
+                        hListener.startTranslate((PrruInfoShape) shape, x, y);
+                    }
+                }
+                if (!flag) {
+                    hListener.clickBlank();
+                }
+            }
+
+            @Override
+            public void moveTranslate(float x, float y) {
+                if (templePrru != null) {
+                    hListener.moveTranslate(templePrru, x, y);
+                }
+            }
+
+            @Override
+            public void endTranslate(float x, float y) {
+                if (templePrru != null) {
+                    hListener.endTranslate(templePrru, x, y);
+                }
+                templePrru = null;
+            }
+        });
+    }
 
     public int getmFiterColor() {
         return this.mFiterColor;
@@ -266,4 +305,16 @@ public class HighlightImageView1 extends TouchImageView1 implements ShapeExtensi
         }
         return false;
     }
+
+    public interface PrruModifyHListener {
+        void startTranslate(PrruInfoShape shape, float x, float y);
+
+        void moveTranslate(PrruInfoShape shape, float x, float y);
+
+        void endTranslate(PrruInfoShape shape, float x, float y);
+
+        void clickBlank();
+    }
+
+
 }
