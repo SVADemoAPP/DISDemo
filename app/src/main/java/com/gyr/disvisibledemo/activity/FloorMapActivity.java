@@ -1,5 +1,6 @@
 package com.gyr.disvisibledemo.activity;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -27,6 +28,8 @@ import com.gyr.disvisibledemo.framework.activity.BaseActivity;
 import com.gyr.disvisibledemo.framework.utils.StringUtil;
 import com.gyr.disvisibledemo.util.Constant;
 import com.gyr.disvisibledemo.util.XmlUntils;
+import com.tbruyelle.rxpermissions2.Permission;
+import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import net.yoojia.imagemap.HighlightImageView1;
 import net.yoojia.imagemap.ImageMap1;
@@ -50,6 +53,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+
+import io.reactivex.functions.Consumer;
 
 import static com.google.zxing.integration.android.IntentIntegrator.REQUEST_CODE;
 
@@ -86,7 +91,9 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     private String mapPath;
     private PrruInfoShape tempPrruInfoShape;
     private PrruInfoShape redPrruInfoShape;
-//    private boolean  mShowBubble=true; //默认
+    private String[] mPermission = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
+    //    private boolean  mShowBubble=true; //默认
     @Override
     public void findView() {
         mFloorMap = findViewById(R.id.imagemap);
@@ -235,14 +242,38 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                         mNowSelectPrru.setBind(true);
                         mNowSelectPrru.setPrruShowType(PrruInfoShape.pRRUType.inArea);
                     }
-                    openZxing();
+                    getOtherRxPermission(mPermission, new PerMissonListener() { //使用前  先判断权限有没有开启
+
+
+                        @Override
+                        public void havePermission() {
+                            openZxing();
+                        }
+
+                        @Override
+                        public void missPermission() {
+                            showToast("请在权限管理中打开权限");
+                        }
+                    });
+
                     break;
                 case R.id.menu_unbind:
                     if (mNowSelectPrru != null) {
                         mNowSelectPrru.setBind(false);
                         mNowSelectPrru.setPrruShowType(PrruInfoShape.pRRUType.outArea);
                     }
-                    openZxing();
+                    getOtherRxPermission(mPermission, new PerMissonListener() { //使用前  先判断权限有没有开启
+
+                        @Override
+                        public void havePermission() {
+                            openZxing();
+                        }
+
+                        @Override
+                        public void missPermission() {
+                            showToast("请在权限管理中打开权限");
+                        }
+                    });
                     break;
                 case R.id.menu_move:
                     float centerX = mNowSelectPrru.getCenterX();  //获取中心点xy
@@ -257,7 +288,20 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                     showToast("请长按红色pRRU进行位置修改");
                     break;
                 case R.id.menu_camera:
-                    openCamera();
+                    //做权限判断
+                    getOtherRxPermission(mPermission, new PerMissonListener() { //使用前  先判断权限有没有开启
+
+                        @Override
+                        public void havePermission() {
+                            openCamera();
+                        }
+
+                        @Override
+                        public void missPermission() {
+                            showToast("请在权限管理中打开权限");
+                        }
+                    });
+
                     break;
                 default:
                     break;
@@ -570,4 +614,6 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         // 显示
         normalDialog.show();
     }
+
+
 }

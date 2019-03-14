@@ -258,7 +258,7 @@ public abstract class BaseActivity extends Activity {
      */
     private void getRxPermission() {
         RxPermissions rxPermissions = new RxPermissions(this); // where this is an Activity instance
-        rxPermissions.requestEach(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        rxPermissions.requestEach(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA)
                 .subscribe(new Consumer<Permission>() {
                     @Override
                     public void accept(Permission permission) throws Exception {
@@ -274,6 +274,35 @@ public abstract class BaseActivity extends Activity {
                     }
                 });
 
+    }
+
+    /***
+     * 动态获取其他权限
+     */
+    public void getOtherRxPermission(String[] permission, final PerMissonListener listener) {
+        RxPermissions rxPermissions = new RxPermissions(this); // where this is an Activity instance
+        rxPermissions.request(permission)
+                .subscribe(new Consumer<Boolean>() {
+                    @Override
+                    public void accept(Boolean aBoolean) throws Exception {
+                        if (aBoolean) {  //当所有权限都允许之后，返回true
+                            listener.havePermission();
+                        } else { //没有给权限
+                            listener.missPermission();
+                        }
+                    }
+                });
+
+    }
+
+    /***
+     *  权限回调接口
+     */
+    public interface PerMissonListener {
+
+        void havePermission();
+
+        void missPermission();
     }
 }
 

@@ -1,5 +1,6 @@
 package com.gyr.disvisibledemo.activity;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -150,7 +151,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
     };
 
 
-
     private RvGroupAdapter.OnGroupItemClickListener onGroupItemClickListener = new RvGroupAdapter.OnGroupItemClickListener() {
         @Override
         public void groupClick(String siteName, int type) {
@@ -289,7 +289,10 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                mTopRightMenu.showAsDropDown(mllAdd, -200, 20);    //带偏移量
+                if(mTopRightMenu!=null)
+                {
+                    mTopRightMenu.showAsDropDown(mllAdd, -200, 20);    //带偏移量
+                }
                 break;
             default:
                 break;
@@ -328,7 +331,18 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                                             runOnUiThread(new Runnable() {
                                                 @Override
                                                 public void run() {
-                                                    openBlueToothFileSelector();//打开蓝牙目录
+                                                    getOtherRxPermission(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, new PerMissonListener() {
+                                                        @Override
+                                                        public void havePermission() {
+                                                            openBlueToothFileSelector();//打开蓝牙目录
+                                                        }
+
+                                                        @Override
+                                                        public void missPermission() {
+                                                            showToast("请在权限管理中打开存储权限");
+                                                        }
+                                                    });
+
                                                 }
                                             });
                                         } catch (InterruptedException e) {
@@ -348,8 +362,19 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                                                 @Override
                                                 public void run() {
 //                                                    openFileSelector(DIRECTION_ROOT, "文件选择"); //打开文件根目录
-                                                    Intent intent = new Intent(mContext, FileSearchActivity.class);
-                                                    startActivityForResult(intent, 300);
+                                                    getOtherRxPermission(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, new PerMissonListener() {
+                                                        @Override
+                                                        public void havePermission() {
+                                                            Intent intent = new Intent(mContext, FileSearchActivity.class);
+                                                            startActivityForResult(intent, 300);
+                                                        }
+
+                                                        @Override
+                                                        public void missPermission() {
+                                                            showToast("请在权限管理中打开存储权限");
+                                                        }
+                                                    });
+
                                                 }
                                             });
                                         } catch (InterruptedException e) {
