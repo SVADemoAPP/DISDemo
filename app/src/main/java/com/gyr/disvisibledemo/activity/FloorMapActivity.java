@@ -255,7 +255,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                             showToast("请在权限管理中打开权限");
                         }
                     });
-
+                    mFloorMap.getBubble().setVisibility(View.GONE);
                     break;
                 case R.id.menu_unbind:
                     if (mNowSelectPrru != null) {
@@ -274,6 +274,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                             showToast("请在权限管理中打开权限");
                         }
                     });
+                    mFloorMap.getBubble().setVisibility(View.GONE);
                     break;
                 case R.id.menu_move:
                     float centerX = mNowSelectPrru.getCenterX();  //获取中心点xy
@@ -286,6 +287,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                     mFloorMap.removeShape(mNowSelectPrru.getTag());
                     mFloorMap.setShowBubble(false);
                     showToast("请长按红色pRRU进行位置修改");
+                    mFloorMap.getBubble().setVisibility(View.GONE);
                     break;
                 case R.id.menu_camera:
                     //做权限判断
@@ -301,7 +303,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                             showToast("请在权限管理中打开权限");
                         }
                     });
-
+                    mFloorMap.getBubble().setVisibility(View.GONE);
                     break;
                 default:
                     break;
@@ -448,7 +450,10 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                     }
                 }
                 Toast.makeText(mContext, "Path:" + imgPath, Toast.LENGTH_SHORT).show();
-                copyPhototoPath(imgPath, IMAGE_ROOT_PATH);
+                if (imgPath!=null&&!imgPath.equals("")){
+                    copyPhototoPath(imgPath, IMAGE_ROOT_PATH);
+                }
+
                 break;
             default:
                 break;
