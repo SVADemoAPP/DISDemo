@@ -1,13 +1,7 @@
 package com.gyr.disvisibledemo.activity;
 
-import android.Manifest;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
@@ -26,6 +20,7 @@ import android.widget.Toast;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 import com.gyr.disvisibledemo.R;
+import com.gyr.disvisibledemo.fragment.ARFragment;
 import com.gyr.disvisibledemo.fragment.PrruMapFragment;
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
 
@@ -34,7 +29,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
 
 import static com.google.zxing.integration.android.IntentIntegrator.REQUEST_CODE;
 
@@ -56,6 +50,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     private Uri photoUri;
     private String mapPath;
     private PrruMapFragment prruMapFragment;
+    private ARFragment arFragment;
     private File ffile;
 
 
@@ -94,9 +89,11 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     public void dealLogicBeforeInitView() {
         mapPath = (String) getIntent().getExtras().get("floormap");
         prruMapFragment = new PrruMapFragment();
+        arFragment = new ARFragment();
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.add(R.id.prru_replace, prruMapFragment);
+        fragmentTransaction.add(R.id.ar_replace, arFragment);
         fragmentTransaction.commit();
 
     }
