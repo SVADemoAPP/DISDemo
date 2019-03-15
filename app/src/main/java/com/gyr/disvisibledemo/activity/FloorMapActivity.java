@@ -28,36 +28,13 @@ import com.google.zxing.integration.android.IntentResult;
 import com.gyr.disvisibledemo.R;
 import com.gyr.disvisibledemo.fragment.PrruMapFragment;
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
-import com.gyr.disvisibledemo.framework.utils.StringUtil;
-import com.gyr.disvisibledemo.util.Constant;
-import com.gyr.disvisibledemo.util.XmlUntils;
-import com.tbruyelle.rxpermissions2.Permission;
-import com.tbruyelle.rxpermissions2.RxPermissions;
-
-import net.yoojia.imagemap.HighlightImageView1;
-import net.yoojia.imagemap.ImageMap1;
-import net.yoojia.imagemap.TouchImageView1;
-import net.yoojia.imagemap.core.Bubble;
-import net.yoojia.imagemap.core.CircleShape;
-import net.yoojia.imagemap.core.CollectPointShape;
-import net.yoojia.imagemap.core.MoniPointShape;
-import net.yoojia.imagemap.core.PushMessageShape;
-import net.yoojia.imagemap.core.Shape;
-import net.yoojia.imagemap.core.ShapeExtension;
-import net.yoojia.imagemap.core.SpecialShape;
-import net.yoojia.imagemap.core.PrruInfoShape;
-
-import org.dom4j.Element;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
-import java.util.Random;
 
-import io.reactivex.functions.Consumer;
 
 import static com.google.zxing.integration.android.IntentIntegrator.REQUEST_CODE;
 
@@ -125,12 +102,6 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     }
 
 
-//    private void openSysCamera(String photoName) {
-//        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-//        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(
-//                new File(Constant.SD_PATH + "/photos", photoName)));
-//        startActivityForResult(cameraIntent, CODE_OPEN_CAMERA);
-//    }
 
 
     @Override
