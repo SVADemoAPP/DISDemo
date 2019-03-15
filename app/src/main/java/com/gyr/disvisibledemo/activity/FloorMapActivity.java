@@ -1,20 +1,15 @@
 package com.gyr.disvisibledemo.activity;
 
-import android.Manifest;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
-import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.View;
@@ -25,59 +20,27 @@ import android.widget.Toast;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 import com.gyr.disvisibledemo.R;
+import com.gyr.disvisibledemo.fragment.ARFragment;
+import com.gyr.disvisibledemo.fragment.PrruMapFragment;
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
-import com.gyr.disvisibledemo.framework.sharef.DisplayRotationHelper;
-import com.gyr.disvisibledemo.framework.utils.StringUtil;
-import com.gyr.disvisibledemo.util.Constant;
-import com.gyr.disvisibledemo.util.XmlUntils;
-
-import net.yoojia.imagemap.HighlightImageView1;
-import net.yoojia.imagemap.ImageMap1;
-import net.yoojia.imagemap.TouchImageView1;
-import net.yoojia.imagemap.core.Bubble;
-import net.yoojia.imagemap.core.CollectPointShape;
-import net.yoojia.imagemap.core.MoniPointShape;
-import net.yoojia.imagemap.core.PrruInfoShape;
-import net.yoojia.imagemap.core.PushMessageShape;
-import net.yoojia.imagemap.core.Shape;
-import net.yoojia.imagemap.core.ShapeExtension;
-import net.yoojia.imagemap.core.SpecialShape;
-
-import org.dom4j.Element;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
-import java.util.Random;
-
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
 
 import static com.google.zxing.integration.android.IntentIntegrator.REQUEST_CODE;
 
-public class FloorMapActivity extends BaseActivity implements View.OnClickListener,GLSurfaceView.Renderer{
+public class FloorMapActivity extends BaseActivity implements View.OnClickListener {
     private static final int CODE_OPEN_CAMERA = 1;
     private static final String IMAGE_ROOT_PATH = Environment.getExternalStorageState() + File.separator + "Tester";//todo
-    private PrruInfoShape mNowSelectPrru;
-    private int mWidth;
-    private int mHeight;
-    private Random mRandom = new Random();
-    private boolean l1 = false;
-    int num = 0;
     private Context mContext;
     private boolean mFirst = false;
-    private View mMenuView;
-    private LinearLayout mMenuBind;
-    private LinearLayout mMenuMove;
-    private LinearLayout mMenuCamera;
-    private LinearLayout mMenuUnBind;
     private TextView mToolName;
     private LinearLayout mBack;
     private LinearLayout mAdd;
-    private ImageMap1 mFloorMap; //地图
+
 
     public final int TYPE_TAKE_PHOTO = 1;//Uri获取类型判断
     private static final int CODE_TAKE_PHOTO = 1;// 拍照
@@ -85,32 +48,24 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     public final int NEED_CAMERA = 0;
     private String imgPath;//图片路径
     private Uri photoUri;
-    private File ffile;
-    private String mFileUrl;
-    private Bitmap mBitmap;
     private String mapPath;
-    private PrruInfoShape tempPrruInfoShape;
-    private PrruInfoShape redPrruInfoShape;
-    private String[] mPermission = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-
-    //AR相关
-    private GLSurfaceView mSurfaceView;
-    private DisplayRotationHelper mDisplayRotationHelper;
+    private PrruMapFragment prruMapFragment;
+    private ARFragment arFragment;
+    private File ffile;
 
 
-    //    private boolean  mShowBubble=true; //默认
     @Override
     public void findView() {
-        mFloorMap = findViewById(R.id.imagemap);
         mBack = findViewById(R.id.back);
         mToolName = findViewById(R.id.tool_top_name);
         mAdd = findViewById(R.id.tool_right_add);
         mAdd.setVisibility(View.GONE);
         mBack.setVisibility(View.VISIBLE);
         mBack.setOnClickListener(this);
+    }
 
-        mSurfaceView = findViewById(R.id.surfaceview);
-        mDisplayRotationHelper = new DisplayRotationHelper(this);
+    public String getMap() {
+        return mapPath;
     }
 
     @Override
@@ -125,7 +80,6 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         if (hasFocus) {
             if (!mFirst) {
                 mFirst = true;
-                getData();
             }
 
         }
@@ -134,259 +88,33 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     @Override
     public void dealLogicBeforeInitView() {
         mapPath = (String) getIntent().getExtras().get("floormap");
-        mBitmap = BitmapFactory.decodeFile(Constant.DATA_PATH + File.separator + mapPath);
-        mWidth = mBitmap.getWidth();
-        mHeight = mBitmap.getHeight();
-        mFloorMap.setMapBitmap(mBitmap);
-        mFloorMap.setAllowRotate(false); //不能转动
-        mFloorMap.setPrruListener(new HighlightImageView1.PrruModifyHListener() {   //监听地图上prru移动事件
-            @Override
-            public void startTranslate(PrruInfoShape shape, float x, float y) {
-                if (tempPrruInfoShape != null) {
-                    Log.e("XHF_start", "x=" + x + "-----y=" + y);
-                    if (!shape.getMove()) {
-                        return;
-                    }
-                    redPrruInfoShape.setValues(x, y);
-                }
+        prruMapFragment = new PrruMapFragment();
+        arFragment = new ARFragment();
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.add(R.id.prru_replace, prruMapFragment);
+        fragmentTransaction.add(R.id.ar_replace, arFragment);
+        fragmentTransaction.commit();
 
-            }
-
-            @Override
-            public void moveTranslate(PrruInfoShape shape, float x, float y) {
-                Log.e("XHF_move", "x=" + x + "-----y=" + y);
-                if (tempPrruInfoShape != null) {
-                    if (!shape.getMove()) {
-                        return;
-                    }
-                    redPrruInfoShape.setValues(x, y);
-                }
-            }
-
-            @Override
-            public void endTranslate(PrruInfoShape shape, float x, float y) {
-                Log.e("XHF_end", "x=" + x + "-----y=" + y);
-                if (tempPrruInfoShape != null) {
-                    if (!shape.getMove()) {
-                        return;
-                    }
-                    redPrruInfoShape.setValues(x, y);
-                    showNormalDialog("pRRU位置修改", "确定本次修改？");
-                }
-
-            }
-
-            @Override
-            public void clickBlank() {
-
-
-            }
-
-            @Override
-            public void clickOutSide() {  //判断是点击除开prru的外部
-                mFloorMap.getBubble().setVisibility(View.GONE);
-                if (tempPrruInfoShape != null) { //只有在调整事件触发的时候才有  点击空的没有prrushape的位置
-                    mFloorMap.removeShape("temp"); //移除红色
-                    mFloorMap.addShape(tempPrruInfoShape, false);//还原
-                    tempPrruInfoShape = null;
-                    showToast("已取消调整");
-                    mFloorMap.setShowBubble(true);
-                }
-            }
-        });
     }
 
-    private void getData() {
-        String siteName = mapPath.substring(0, mapPath.indexOf(File.separator));
-        String floorName = mapPath.substring(mapPath.indexOf(File.separator) + 1, mapPath.indexOf("."));
-        Element rootElement = XmlUntils.getRootElement(Constant.DATA_PATH + File.separator + siteName + File.separator + "project.xml");
-        Element floors = XmlUntils.getElementByName(rootElement, "Floors");
-        List<Element> floorList = XmlUntils.getElementListByName(floors, "Floor");
-        for (Element element : floorList) {
-            //如果是同一楼层
-            if (floorName.equals(XmlUntils.getAttributeValueByName(element, "floorCode"))) {
-                List<Element> nes = XmlUntils.getElementListByName(XmlUntils.getElementByName(element, "NEs"), "NE");
-                for (Element ne : nes) {
-                    PrruInfoShape prruInfoShape = new PrruInfoShape(XmlUntils.getAttributeValueByName(ne, "id"), Color.YELLOW, this);
-                    prruInfoShape.setId(XmlUntils.getAttributeValueByName(ne, "id"));
-                    prruInfoShape.setValues(Float.parseFloat(XmlUntils.getAttributeValueByName(ne, "x")), Float.parseFloat(XmlUntils.getAttributeValueByName(ne, "y")));
-                    prruInfoShape.setBind(false);
-                    prruInfoShape.setMove(false);
-                    prruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.outArea);
-                    if (!StringUtil.isNullOrEmpty(XmlUntils.getAttributeValueByName(ne, "esn"))) {
-                        prruInfoShape.setBind(true);
-                        prruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.inArea);
-                    }
-                    mFloorMap.addShape(prruInfoShape, false);
-                }
-                break;
-            }
-        }
-    }
 
-    private View.OnClickListener onMenuClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            switch (v.getId()) {
-                case R.id.menu_bind:
-                    if (mNowSelectPrru != null) {
-                        mNowSelectPrru.setBind(true);
-                        mNowSelectPrru.setPrruShowType(PrruInfoShape.pRRUType.inArea);
-                    }
-                    getOtherRxPermission(mPermission, new PerMissonListener() { //使用前  先判断权限有没有开启
-
-
-                        @Override
-                        public void havePermission() {
-                            openZxing();
-                        }
-
-                        @Override
-                        public void missPermission() {
-                            showToast("请在权限管理中打开权限");
-                        }
-                    });
-                    mFloorMap.getBubble().setVisibility(View.GONE);
-                    break;
-                case R.id.menu_unbind:
-                    if (mNowSelectPrru != null) {
-                        mNowSelectPrru.setBind(false);
-                        mNowSelectPrru.setPrruShowType(PrruInfoShape.pRRUType.outArea);
-                    }
-                    getOtherRxPermission(mPermission, new PerMissonListener() { //使用前  先判断权限有没有开启
-
-                        @Override
-                        public void havePermission() {
-                            openZxing();
-                        }
-
-                        @Override
-                        public void missPermission() {
-                            showToast("请在权限管理中打开权限");
-                        }
-                    });
-                    mFloorMap.getBubble().setVisibility(View.GONE);
-                    break;
-                case R.id.menu_move:
-                    float centerX = mNowSelectPrru.getCenterX();  //获取中心点xy
-                    float centerY = mNowSelectPrru.getCenterY();
-                    redPrruInfoShape.setValues(centerX, centerY);
-                    redPrruInfoShape.setMove(true);
-                    mFloorMap.addShape(redPrruInfoShape, false);
-                    mMenuView.setVisibility(View.GONE);
-                    tempPrruInfoShape = mNowSelectPrru;
-                    mFloorMap.removeShape(mNowSelectPrru.getTag());
-                    mFloorMap.setShowBubble(false);
-                    showToast("请长按红色pRRU进行位置修改");
-                    mFloorMap.getBubble().setVisibility(View.GONE);
-                    break;
-                case R.id.menu_camera:
-                    //做权限判断
-                    getOtherRxPermission(mPermission, new PerMissonListener() { //使用前  先判断权限有没有开启
-
-                        @Override
-                        public void havePermission() {
-                            openCamera();
-                        }
-
-                        @Override
-                        public void missPermission() {
-                            showToast("请在权限管理中打开权限");
-                        }
-                    });
-                    mFloorMap.getBubble().setVisibility(View.GONE);
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
-
-
-    private void openSysCamera(String photoName) {
-        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(
-                new File(Constant.SD_PATH + "/photos", photoName)));
-        startActivityForResult(cameraIntent, CODE_OPEN_CAMERA);
-    }
+//    private void openSysCamera(String photoName) {
+//        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+//        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(
+//                new File(Constant.SD_PATH + "/photos", photoName)));
+//        startActivityForResult(cameraIntent, CODE_OPEN_CAMERA);
+//    }
 
 
     @Override
     public void initView() {
-        mToolName.setText("安装pRRU");
-        mMenuView = View.inflate(this, R.layout.prru_menu_layout, null);
-        mMenuBind = mMenuView.findViewById(R.id.menu_bind);
-        mMenuUnBind = mMenuView.findViewById(R.id.menu_unbind);
-        mMenuMove = mMenuView.findViewById(R.id.menu_move);
-        mMenuCamera = mMenuView.findViewById(R.id.menu_camera);
-        mMenuBind.setOnClickListener(onMenuClickListener);
-        mMenuUnBind.setOnClickListener(onMenuClickListener);
-        mMenuMove.setOnClickListener(onMenuClickListener);
-        mMenuCamera.setOnClickListener(onMenuClickListener);
-        mFloorMap.setBubbleView(mMenuView, new Bubble.RenderDelegate() {
-            @Override
-            public void onDisplay(Shape shape, View bubbleView) {
-                if (shape instanceof PrruInfoShape) {
-                    if (((PrruInfoShape) shape).isBind()) {
-                        mMenuUnBind.setVisibility(View.VISIBLE);
-                        mMenuBind.setVisibility(View.GONE);
-                    } else {
-                        mMenuBind.setVisibility(View.VISIBLE);
-                        mMenuUnBind.setVisibility(View.GONE);
-
-                    }
-                }
-            }
-        });
-//        mMenuView.setVisibility(View.VISIBLE);
-        mFloorMap.setOnShapeClickListener(new ShapeExtension.OnShapeActionListener() {
-            @Override
-            public void onCollectShapeClick(CollectPointShape collectPointShape, float f, float f2) {
-
-            }
-
-            @Override
-            public void onMoniShapeClick(MoniPointShape moniPointShape, float f, float f2) {
-
-            }
-
-            @Override
-            public void onPrruInfoShapeClick(PrruInfoShape prruinfoshape, float f, float f2) {
-//                showToast("单击:" + prruinfoshape.getTag());
-                mNowSelectPrru = prruinfoshape;
-            }
-
-            @Override
-            public void onPushMessageShapeClick(PushMessageShape pushMessageShape, float f, float f2) {
-
-            }
-
-            @Override
-            public void onSpecialShapeClick(SpecialShape specialShape, float f, float f2) {
-
-            }
-
-            @Override
-            public void outShapeClick(float f, float f2) {
-
-            }
-        });
-
-        mFloorMap.setOnLongClickListener1(new TouchImageView1.OnLongClickListener1() {
-            @Override
-            public void onLongClick(Shape shape) {
-                if (shape instanceof PrruInfoShape) {
-//                    showToast("长按:" + ((PrruInfoShape) shape).getTag());
-                }
-
-            }
-        });
+        mToolName.setText("pRRU");
     }
 
     @Override
     public void dealLogicAfterInitView() {
-        redPrruInfoShape = new PrruInfoShape("temp", Color.GREEN, mContext);
-        redPrruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.temple);
+
     }
 
     @Override
@@ -403,8 +131,6 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                 }
             }
         }
-
-
         switch (requestCode) {
             case CODE_TAKE_PHOTO:  //拍照返回后获取图片
                 if (resultCode == RESULT_OK) {
@@ -441,7 +167,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                     }
                 }
                 Toast.makeText(mContext, "Path:" + imgPath, Toast.LENGTH_SHORT).show();
-                if (imgPath!=null&&!imgPath.equals("")){
+                if (imgPath != null && !imgPath.equals("")) {
                     copyPhototoPath(imgPath, IMAGE_ROOT_PATH);
                 }
 
@@ -466,17 +192,6 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         }
     }
 
-    private void openZxing() {
-        // 打开扫描界面扫描条形码或二维码
-        IntentIntegrator intentIntegrator = new IntentIntegrator(this);
-        intentIntegrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES); //设置扫描的类型
-        intentIntegrator.setOrientationLocked(false);  //方向锁定
-        intentIntegrator.setCaptureActivity(PortraitZxingActivity.class);
-        intentIntegrator.setCameraId(0); //前置相机还是后置相机
-        intentIntegrator.setBeepEnabled(false); //是否发出成功的声音
-        intentIntegrator.setBarcodeImageEnabled(true);
-        intentIntegrator.initiateScan();
-    }
 
     /**
      * 拍照  适配7.0上下
@@ -571,60 +286,18 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // 先判断是否已经回收
-        if (mBitmap != null && !mBitmap.isRecycled()) {
-            // 回收并且置为null
-            mBitmap.recycle();
-            mBitmap = null;
-        }
     }
 
-
-    private void showNormalDialog(String title, String message) {
-        final AlertDialog.Builder normalDialog =
-                new AlertDialog.Builder(mContext);
-        normalDialog.setTitle(title);
-        normalDialog.setMessage(message);
-        normalDialog.setPositiveButton("确定",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        showToast("pRRU位置修改成功");
-                        tempPrruInfoShape.setValues(redPrruInfoShape.getCenterX(), redPrruInfoShape.getCenterY());
-                        mFloorMap.removeShape("temp"); //移除红色
-                        mFloorMap.addShape(tempPrruInfoShape, false);//还原
-                        mFloorMap.setShowBubble(true);
-                    }
-                });
-        normalDialog.setNegativeButton("取消",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        showToast("已取消修改");
-                        mFloorMap.removeShape("temp"); //移除红色
-                        mFloorMap.addShape(tempPrruInfoShape, false);//还原
-                        tempPrruInfoShape = null;
-                        mFloorMap.setShowBubble(true);
-                    }
-                });
-        // 显示
-        normalDialog.show();
-    }
-
-
-    @Override
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-
-    }
-
-    @Override
-    public void onSurfaceChanged(GL10 gl, int width, int height) {
-
-    }
-
-    @Override
-    public void onDrawFrame(GL10 gl) {
-
+    public void openZxing() {
+        // 打开扫描界面扫描条形码或二维码
+        IntentIntegrator intentIntegrator = new IntentIntegrator(this);
+        intentIntegrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES); //设置扫描的类型
+        intentIntegrator.setOrientationLocked(false);  //方向锁定
+        intentIntegrator.setCaptureActivity(PortraitZxingActivity.class);
+        intentIntegrator.setCameraId(0); //前置相机还是后置相机
+        intentIntegrator.setBeepEnabled(false); //是否发出成功的声音
+        intentIntegrator.setBarcodeImageEnabled(true);
+        intentIntegrator.initiateScan();
     }
 
 }

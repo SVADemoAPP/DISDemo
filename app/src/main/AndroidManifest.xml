@@ -31,7 +31,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.FloorMapActivity" />
+        <activity android:name=".activity.FloorMapActivity" android:screenOrientation="portrait"/>
         <activity
             android:name=".activity.PortraitZxingActivity"
             android:screenOrientation="portrait" /> <!-- 7.0contentProvider -->

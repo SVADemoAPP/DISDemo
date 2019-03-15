@@ -4,12 +4,14 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <include layout="@layout/tool_bar_layout" />
-
-    <FrameLayout
-        android:id="@+id/prru_replace"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"></FrameLayout>
+        android:layout_weight="1"></LinearLayout>
 
+    <net.yoojia.imagemap.ImageMap1
+        android:id="@+id/imagemap"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 </LinearLayout>
