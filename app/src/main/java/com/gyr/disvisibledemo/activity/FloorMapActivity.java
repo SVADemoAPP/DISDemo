@@ -99,12 +99,6 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     }
 
 
-//    private void openSysCamera(String photoName) {
-//        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-//        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(
-//                new File(Constant.SD_PATH + "/photos", photoName)));
-//        startActivityForResult(cameraIntent, CODE_OPEN_CAMERA);
-//    }
 
 
     @Override

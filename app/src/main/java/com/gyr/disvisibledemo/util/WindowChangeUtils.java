@@ -1,8 +1,8 @@
-package com.gyr.disvisibledemo.util;
+package com.chinasoft.robotdemo.util;
 
 import android.view.WindowManager;
 
-import com.gyr.disvisibledemo.framework.activity.BaseActivity;
+import com.chinasoft.robotdemo.framwork.activity.BaseActivity;
 
 
 public class WindowChangeUtils {

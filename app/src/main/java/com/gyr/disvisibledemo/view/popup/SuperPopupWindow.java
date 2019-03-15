@@ -1,4 +1,4 @@
-package com.gyr.disvisibledemo.view.popup;
+package com.chinasoft.robotdemo.view.popup;
 
 import android.content.Context;
 import android.view.Gravity;
@@ -7,8 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.PopupWindow;
 
-import com.gyr.disvisibledemo.framework.activity.BaseActivity;
-import com.gyr.disvisibledemo.util.WindowChangeUtils;
+import com.chinasoft.robotdemo.framwork.activity.BaseActivity;
+import com.chinasoft.robotdemo.util.WindowChangeUtils;
 
 
 /***
@@ -26,15 +26,15 @@ public class SuperPopupWindow extends PopupWindow {
      * @param context 上下文对象
      * @param layout
      */
-    public SuperPopupWindow(final Context context, int layout,ViewListener viewListener) {
+    public SuperPopupWindow(final Context context, int layout) {
         this.context = (BaseActivity) context;
         mView = LayoutInflater.from(context).inflate(layout, null, false);
         //设置PopupWindow的View
         this.setContentView(mView);
         //设置PopupWindow弹出窗体的宽
-        this.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
+        this.setWidth(ViewGroup.LayoutParams.MATCH_PARENT);
         //设置PopupWindow弹出窗体的高
-        this.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+        this.setHeight(ViewGroup.LayoutParams.MATCH_PARENT);
         //设置PopupWindow弹出窗体可点击
         this.setOutsideTouchable(false);//设置外部点击可消失
         this.setFocusable(false);
@@ -44,17 +44,14 @@ public class SuperPopupWindow extends PopupWindow {
                 WindowChangeUtils.changeWindowAlfa((BaseActivity) context, light);//改变窗口透明度
             }
         });
-        viewListener.getViewOfPop(mView);
     }
+
 
     public void setWarpContent() {
         this.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
+        //设置PopupWindow弹出窗体的高
         this.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
-    }
-
-    public void setWidthAndHeight(int width,int height) {
-        this.setWidth(width);
-        this.setHeight(height);
+        //设置PopupWindow弹出窗体可点击
     }
 
     /**
@@ -79,13 +76,9 @@ public class SuperPopupWindow extends PopupWindow {
         this.update();
     }
 
-    /**
-     * 显示在某view下方
-     * @param view
-     */
-    public void showPopupWindowAsDropDown(View view) {
-//        WindowChangeUtils.changeWindowAlfa(context, black);//改变窗口透明度
-        this.showAsDropDown(view);
+    public void showPopupWindowBottom() {
+        WindowChangeUtils.changeWindowAlfa(context, black);//改变窗口透明度
+        this.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
         this.update();
     }
 
@@ -111,10 +104,6 @@ public class SuperPopupWindow extends PopupWindow {
      */
     public void setAnimotion(int style) {
         this.setAnimationStyle(style);
-    }
-
-    public interface ViewListener{
-        void getViewOfPop(View view);
     }
 
 }

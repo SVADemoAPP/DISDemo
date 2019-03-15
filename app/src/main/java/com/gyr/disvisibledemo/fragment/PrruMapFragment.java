@@ -21,7 +21,7 @@ import android.widget.Toast;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.gyr.disvisibledemo.R;
 import com.gyr.disvisibledemo.activity.FloorMapActivity;
-import com.gyr.disvisibledemo.activity.PortraitZxingActivity;
+
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
 import com.gyr.disvisibledemo.framework.utils.StringUtil;
 import com.gyr.disvisibledemo.util.Constant;
@@ -122,7 +122,7 @@ public class PrruMapFragment extends Fragment {
         mFloorMap.setAllowRotate(false); //不能转动
         mFloorMap.setOnLongClickListener1(new TouchImageView1.OnLongClickListener1() {
             @Override
-            public void onLongClick(Shape shape) {
+            public void onLongClick(Shape shape) {   //必须注册这个才能长按
                 if (shape instanceof PrruInfoShape) {
 //                    showToast("长按:" + ((PrruInfoShape) shape).getTag());
                 }
