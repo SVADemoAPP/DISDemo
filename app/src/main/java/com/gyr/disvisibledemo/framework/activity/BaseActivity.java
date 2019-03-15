@@ -6,7 +6,9 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.View;
@@ -20,7 +22,7 @@ import com.tbruyelle.rxpermissions2.RxPermissions;
 import io.reactivex.functions.Consumer;
 
 
-public abstract class BaseActivity extends Activity {
+public abstract class BaseActivity extends AppCompatActivity {
     private ProgressDialog progressDialog;
 
     @Override
@@ -257,23 +259,22 @@ public abstract class BaseActivity extends Activity {
      * 动态获取权限
      */
     private void getRxPermission() {
+
+
         RxPermissions rxPermissions = new RxPermissions(this); // where this is an Activity instance
-        rxPermissions.requestEach(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA)
-                .subscribe(new Consumer<Permission>() {
+        rxPermissions.request(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA)
+                .subscribe(new Consumer<Boolean>() {
                     @Override
-                    public void accept(Permission permission) throws Exception {
-                        if (permission.granted) { //给了权限
+                    public void accept(Boolean aBoolean) throws Exception {
+                        if (aBoolean) {  //当所有权限都允许之后，返回true
                             dealLogicBeforeInitView();
                             initView();
                             dealLogicAfterInitView();
-                        } else if (permission.shouldShowRequestPermissionRationale) {
-
-                        } else {
+                        } else { //没有给权限
                             showToast("未授权权限，部分功能不能使用");
                         }
                     }
                 });
-
     }
 
     /***
