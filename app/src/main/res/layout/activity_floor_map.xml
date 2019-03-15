@@ -7,6 +7,13 @@
     <include layout="@layout/tool_bar_layout" />
 
     <FrameLayout
+        android:id="@+id/ar_replace"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"></FrameLayout>
+
+
+    <FrameLayout
         android:id="@+id/prru_replace"
         android:layout_width="match_parent"
         android:layout_height="0dp"
