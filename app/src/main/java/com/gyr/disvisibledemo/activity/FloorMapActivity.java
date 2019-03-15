@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
+import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -25,24 +26,22 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 import com.gyr.disvisibledemo.R;
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
+import com.gyr.disvisibledemo.framework.sharef.DisplayRotationHelper;
 import com.gyr.disvisibledemo.framework.utils.StringUtil;
 import com.gyr.disvisibledemo.util.Constant;
 import com.gyr.disvisibledemo.util.XmlUntils;
-import com.tbruyelle.rxpermissions2.Permission;
-import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import net.yoojia.imagemap.HighlightImageView1;
 import net.yoojia.imagemap.ImageMap1;
 import net.yoojia.imagemap.TouchImageView1;
 import net.yoojia.imagemap.core.Bubble;
-import net.yoojia.imagemap.core.CircleShape;
 import net.yoojia.imagemap.core.CollectPointShape;
 import net.yoojia.imagemap.core.MoniPointShape;
+import net.yoojia.imagemap.core.PrruInfoShape;
 import net.yoojia.imagemap.core.PushMessageShape;
 import net.yoojia.imagemap.core.Shape;
 import net.yoojia.imagemap.core.ShapeExtension;
 import net.yoojia.imagemap.core.SpecialShape;
-import net.yoojia.imagemap.core.PrruInfoShape;
 
 import org.dom4j.Element;
 
@@ -54,11 +53,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import io.reactivex.functions.Consumer;
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
 
 import static com.google.zxing.integration.android.IntentIntegrator.REQUEST_CODE;
 
-public class FloorMapActivity extends BaseActivity implements View.OnClickListener {
+public class FloorMapActivity extends BaseActivity implements View.OnClickListener,GLSurfaceView.Renderer{
     private static final int CODE_OPEN_CAMERA = 1;
     private static final String IMAGE_ROOT_PATH = Environment.getExternalStorageState() + File.separator + "Tester";//todo
     private PrruInfoShape mNowSelectPrru;
@@ -93,6 +93,11 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     private PrruInfoShape redPrruInfoShape;
     private String[] mPermission = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
+    //AR相关
+    private GLSurfaceView mSurfaceView;
+    private DisplayRotationHelper mDisplayRotationHelper;
+
+
     //    private boolean  mShowBubble=true; //默认
     @Override
     public void findView() {
@@ -103,6 +108,9 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         mAdd.setVisibility(View.GONE);
         mBack.setVisibility(View.VISIBLE);
         mBack.setOnClickListener(this);
+
+        mSurfaceView = findViewById(R.id.surfaceview);
+        mDisplayRotationHelper = new DisplayRotationHelper(this);
     }
 
     @Override
@@ -194,7 +202,6 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         Element rootElement = XmlUntils.getRootElement(Constant.DATA_PATH + File.separator + siteName + File.separator + "project.xml");
         Element floors = XmlUntils.getElementByName(rootElement, "Floors");
         List<Element> floorList = XmlUntils.getElementListByName(floors, "Floor");
-        boolean flag = false;
         for (Element element : floorList) {
             //如果是同一楼层
             if (floorName.equals(XmlUntils.getAttributeValueByName(element, "floorCode"))) {
@@ -206,28 +213,12 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                     prruInfoShape.setBind(false);
                     prruInfoShape.setMove(false);
                     prruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.outArea);
-                    if (StringUtil.isNullOrEmpty(XmlUntils.getAttributeValueByName(ne, "esn"))) {
-                        prruInfoShape.setBind(false);
-                        prruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.outArea);
-                    } else {
+                    if (!StringUtil.isNullOrEmpty(XmlUntils.getAttributeValueByName(ne, "esn"))) {
                         prruInfoShape.setBind(true);
                         prruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.inArea);
                     }
-                    if (!l1) {
-                        num++;
-                        if (num == 3) {
-                            l1 = true;
-                        }
-
-                        mFloorMap.addShape(prruInfoShape, false);
-                    }
-
+                    mFloorMap.addShape(prruInfoShape, false);
                 }
-                flag = true;
-                break;
-            }
-
-            if (flag) {
                 break;
             }
         }
@@ -322,7 +313,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
 
     @Override
     public void initView() {
-        mToolName.setText("pRRU");
+        mToolName.setText("安装pRRU");
         mMenuView = View.inflate(this, R.layout.prru_menu_layout, null);
         mMenuBind = mMenuView.findViewById(R.id.menu_bind);
         mMenuUnBind = mMenuView.findViewById(R.id.menu_unbind);
@@ -620,5 +611,20 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         normalDialog.show();
     }
 
+
+    @Override
+    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+
+    }
+
+    @Override
+    public void onSurfaceChanged(GL10 gl, int width, int height) {
+
+    }
+
+    @Override
+    public void onDrawFrame(GL10 gl) {
+
+    }
 
 }
