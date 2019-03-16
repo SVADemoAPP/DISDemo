@@ -231,17 +231,23 @@ public class TouchImageView1 extends android.support.v7.widget.AppCompatImageVie
                         }
                         rlPoint = new PointF(event.getX(), event.getY());
                         singlePoint = mImageViewHelper.getSinglePoint(imageUsingMatrix, saveRotate, rlPoint);
-                        if (mImageViewHelper.pointInArea(imageUsingMatrix, saveRotate, rlPoint)) {
-                            pRUUlistener.startTranslate(singlePoint.x, singlePoint.y);
+                        if (pRUUlistener != null) {
+                            if (mImageViewHelper.pointInArea(imageUsingMatrix, saveRotate, rlPoint)) {
+
+                                pRUUlistener.startTranslate(singlePoint.x, singlePoint.y);
+
+                            }
+                            pRUUlistener.touchOutside(singlePoint.x, singlePoint.y);
                         }
-                        pRUUlistener.touchOutside(singlePoint.x, singlePoint.y);
                         break;
                     case MotionEvent.ACTION_UP:
                         rlPoint = new PointF(event.getX(), event.getY());
                         singlePoint = mImageViewHelper.getSinglePoint(imageUsingMatrix, saveRotate, rlPoint);
-                        if (mImageViewHelper.pointInArea(imageUsingMatrix, saveRotate, rlPoint)) {
+                        if (pRUUlistener != null) {
+                            if (mImageViewHelper.pointInArea(imageUsingMatrix, saveRotate, rlPoint)) {
 
-                            pRUUlistener.endTranslate(singlePoint.x, singlePoint.y); //xhf 获取长按移动xy
+                                pRUUlistener.endTranslate(singlePoint.x, singlePoint.y); //xhf 获取长按移动xy
+                            }
                         }
                         if (TouchImageView1.this.mOnLongClickListener != null && TouchImageView1.this.bLongClick) {
                             TouchImageView1.this.mOnLongClickListener.onLongClick(TouchImageView1.this.longClickShape);
@@ -272,8 +278,10 @@ public class TouchImageView1 extends android.support.v7.widget.AppCompatImageVie
                                     this.curPoint.y = event.getY();
                                     rlPoint = new PointF(event.getX(), event.getY());
                                     singlePoint = mImageViewHelper.getSinglePoint(imageUsingMatrix, saveRotate, rlPoint);
-                                    if (mImageViewHelper.pointInArea(imageUsingMatrix, saveRotate, rlPoint)) {
-                                        pRUUlistener.moveTranslate(singlePoint.x, singlePoint.y); //xhf 获取长按移动xy
+                                    if (pRUUlistener != null) {
+                                        if (mImageViewHelper.pointInArea(imageUsingMatrix, saveRotate, rlPoint)) {
+                                            pRUUlistener.moveTranslate(singlePoint.x, singlePoint.y); //xhf 获取长按移动xy
+                                        }
                                     }
                                     if (TouchImageView1.this.mImageViewHelper.pointInArea(TouchImageView1.this.imageUsingMatrix, TouchImageView1.this.saveRotate, this.curPoint)) {
                                         this.point1 = TouchImageView1.this.mImageViewHelper.getSinglePoint(TouchImageView1.this.imageUsingMatrix, TouchImageView1.this.saveRotate, this.curPoint);
@@ -595,6 +603,7 @@ public class TouchImageView1 extends android.support.v7.widget.AppCompatImageVie
         void moveTranslate(float x, float y);
 
         void endTranslate(float x, float y);
+
         void touchOutside(float x, float y);
 
     }

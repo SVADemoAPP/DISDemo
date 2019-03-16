@@ -70,8 +70,8 @@ public class PrruMapFragment extends Fragment {
     public void onAttach(Context context) {
         super.onAttach(context);
         mContext = context;
-        mapPath = ((FloorMapActivity) mContext).getMap();
-
+        mBitmap = ((FloorMapActivity) mContext).getBitmap();
+        mapPath=((FloorMapActivity) mContext).getMap();
     }
 
     @Nullable
@@ -115,11 +115,12 @@ public class PrruMapFragment extends Fragment {
     private void initData() {
         redPrruInfoShape = new PrruInfoShape("temp", Color.GREEN,mContext);
         redPrruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.temple);
-        mBitmap = BitmapFactory.decodeFile(Constant.DATA_PATH + File.separator + mapPath);
+
         mWidth = mBitmap.getWidth();
         mHeight = mBitmap.getHeight();
         mFloorMap.setMapBitmap(mBitmap);
         mFloorMap.setAllowRotate(false); //不能转动
+        mFloorMap.setAllowTranslate(false);//不能移动
         mFloorMap.setOnLongClickListener1(new TouchImageView1.OnLongClickListener1() {
             @Override
             public void onLongClick(Shape shape) {   //必须注册这个才能长按
@@ -408,12 +409,8 @@ public class PrruMapFragment extends Fragment {
 
     @Override
     public void onDestroy() {
-        // 先判断是否已经回收
-        if (mBitmap != null && !mBitmap.isRecycled()) {
-            // 回收并且置为null
-            mBitmap.recycle();
-            mBitmap = null;
-        }
         super.onDestroy();
     }
+
+
 }

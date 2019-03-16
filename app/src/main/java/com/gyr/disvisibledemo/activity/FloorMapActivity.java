@@ -2,6 +2,9 @@ package com.gyr.disvisibledemo.activity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.PointF;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
@@ -23,6 +26,8 @@ import com.gyr.disvisibledemo.R;
 import com.gyr.disvisibledemo.fragment.ARFragment;
 import com.gyr.disvisibledemo.fragment.PrruMapFragment;
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
+import com.gyr.disvisibledemo.util.Constant;
+import com.gyr.disvisibledemo.view.popup.SelectPopupWindow;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -52,20 +57,45 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     private PrruMapFragment prruMapFragment;
     private ARFragment arFragment;
     private File ffile;
-
+    private Bitmap mBitmap;
+    private SelectPopupWindow mSelectPopupWindow;
+    private PointF mSelectPointF;
 
     @Override
     public void findView() {
         mBack = findViewById(R.id.back);
         mToolName = findViewById(R.id.tool_top_name);
         mAdd = findViewById(R.id.tool_right_add);
-        mAdd.setVisibility(View.GONE);
+//        mAdd.setVisibility(View.GONE);
         mBack.setVisibility(View.VISIBLE);
         mBack.setOnClickListener(this);
+        mAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mSelectPopupWindow.showPopupWindow();
+            }
+        });
+    }
+
+    public Bitmap getBitmap() {
+        return mBitmap;
     }
 
     public String getMap() {
         return mapPath;
+    }
+
+    /**
+     * 获取选中原始坐标点
+     *
+     * @return
+     */
+    public PointF getSelectPoint() {
+        if (mSelectPointF != null) {
+            return mSelectPointF;
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -77,28 +107,42 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) {
-            if (!mFirst) {
-                mFirst = true;
-            }
 
+        if (hasFocus) {
+//            if (!mFirst) {
+//                mFirst = true;
+//            }
+            if(arFragment!=null)
+            {
+                arFragment.test();
+            }
         }
     }
 
     @Override
     public void dealLogicBeforeInitView() {
         mapPath = (String) getIntent().getExtras().get("floormap");
+        mBitmap = BitmapFactory.decodeFile(Constant.DATA_PATH + File.separator + mapPath);
         prruMapFragment = new PrruMapFragment();
         arFragment = new ARFragment();
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.add(R.id.prru_replace, prruMapFragment);
+//        fragmentTransaction.add(R.id.prru_replace, prruMapFragment);
         fragmentTransaction.add(R.id.ar_replace, arFragment);
         fragmentTransaction.commit();
+        mSelectPopupWindow = new SelectPopupWindow(mContext, mBitmap);
+        mSelectPopupWindow.setSelectListener(new SelectPopupWindow.SelectPointListener() {
+            @Override
+            public void getPoint(PointF pointF) { //有选择点返回
+                mSelectPointF = pointF;
+            }
 
+            @Override
+            public void cancel() {  //没有选择
+
+            }
+        });
     }
-
-
 
 
     @Override
@@ -279,6 +323,11 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
 
     @Override
     protected void onDestroy() {
+        if (mBitmap != null && !mBitmap.isRecycled()) {
+            // 回收并且置为null
+            mBitmap.recycle();
+            mBitmap = null;
+        }
         super.onDestroy();
     }
 
@@ -293,5 +342,6 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         intentIntegrator.setBarcodeImageEnabled(true);
         intentIntegrator.initiateScan();
     }
+
 
 }

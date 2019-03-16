@@ -1,4 +1,4 @@
-package com.chinasoft.robotdemo.view.popup;
+package com.gyr.disvisibledemo.view.popup;
 
 import android.content.Context;
 import android.view.Gravity;
@@ -7,8 +7,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.PopupWindow;
 
-import com.chinasoft.robotdemo.framwork.activity.BaseActivity;
-import com.chinasoft.robotdemo.util.WindowChangeUtils;
+
+import com.gyr.disvisibledemo.framework.activity.BaseActivity;
+import com.gyr.disvisibledemo.util.WindowChangeUtils;
 
 
 /***
@@ -18,8 +19,13 @@ import com.chinasoft.robotdemo.util.WindowChangeUtils;
 public class SuperPopupWindow extends PopupWindow {
     private View mView;
     private BaseActivity context;
-    private static float light=1f;
-    private static float black=0.6f;
+    private static float light = 1f;
+    private static float black = 0.6f;
+
+    public void setBlack(float value) {
+        black = value;
+    }
+
     /**
      * 构造函数
      *
