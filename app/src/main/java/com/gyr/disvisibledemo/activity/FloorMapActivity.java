@@ -28,22 +28,20 @@ import com.gyr.disvisibledemo.framework.activity.BaseActivity;
 import com.gyr.disvisibledemo.framework.utils.StringUtil;
 import com.gyr.disvisibledemo.util.Constant;
 import com.gyr.disvisibledemo.util.XmlUntils;
-import com.tbruyelle.rxpermissions2.Permission;
-import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import net.yoojia.imagemap.HighlightImageView1;
 import net.yoojia.imagemap.ImageMap1;
 import net.yoojia.imagemap.TouchImageView1;
 import net.yoojia.imagemap.core.Bubble;
-import net.yoojia.imagemap.core.CircleShape;
 import net.yoojia.imagemap.core.CollectPointShape;
 import net.yoojia.imagemap.core.MoniPointShape;
+import net.yoojia.imagemap.core.PrruInfoShape;
 import net.yoojia.imagemap.core.PushMessageShape;
 import net.yoojia.imagemap.core.Shape;
 import net.yoojia.imagemap.core.ShapeExtension;
 import net.yoojia.imagemap.core.SpecialShape;
-import net.yoojia.imagemap.core.PrruInfoShape;
 
+import org.dom4j.Document;
 import org.dom4j.Element;
 
 import java.io.File;
@@ -52,21 +50,13 @@ import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
-
-import io.reactivex.functions.Consumer;
 
 import static com.google.zxing.integration.android.IntentIntegrator.REQUEST_CODE;
 
 public class FloorMapActivity extends BaseActivity implements View.OnClickListener {
     private static final int CODE_OPEN_CAMERA = 1;
-    private static final String IMAGE_ROOT_PATH = Environment.getExternalStorageState() + File.separator + "Tester";//todo
+    private static final String IMAGE_ROOT_PATH = Environment.getExternalStorageState() + File.separator + "Tester";
     private PrruInfoShape mNowSelectPrru;
-    private int mWidth;
-    private int mHeight;
-    private Random mRandom = new Random();
-    private boolean l1 = false;
-    int num = 0;
     private Context mContext;
     private boolean mFirst = false;
     private View mMenuView;
@@ -82,16 +72,15 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     public final int TYPE_TAKE_PHOTO = 1;//Uri获取类型判断
     private static final int CODE_TAKE_PHOTO = 1;// 拍照
     private static final int CODE_SHORT_VIDEO = 2;// 短视频
-    public final int NEED_CAMERA = 0;
     private String imgPath;//图片路径
     private Uri photoUri;
-    private File ffile;
-    private String mFileUrl;
     private Bitmap mBitmap;
     private String mapPath;
     private PrruInfoShape tempPrruInfoShape;
     private PrruInfoShape redPrruInfoShape;
     private String[] mPermission = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+    private String siteName;
+    private String floorName;
 
     //    private boolean  mShowBubble=true; //默认
     @Override
@@ -127,8 +116,6 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     public void dealLogicBeforeInitView() {
         mapPath = (String) getIntent().getExtras().get("floormap");
         mBitmap = BitmapFactory.decodeFile(Constant.DATA_PATH + File.separator + mapPath);
-        mWidth = mBitmap.getWidth();
-        mHeight = mBitmap.getHeight();
         mFloorMap.setMapBitmap(mBitmap);
         mFloorMap.setAllowRotate(false); //不能转动
         mFloorMap.setPrruListener(new HighlightImageView1.PrruModifyHListener() {   //监听地图上prru移动事件
@@ -140,6 +127,8 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                         return;
                     }
                     redPrruInfoShape.setValues(x, y);
+                    //开始移动prru时禁止移动地图
+                    mFloorMap.setAllowTranslate(false);
                 }
 
             }
@@ -165,6 +154,8 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                     redPrruInfoShape.setValues(x, y);
                     showNormalDialog("pRRU位置修改", "确定本次修改？");
                 }
+                //prru移动结束后开放移动地图
+                mFloorMap.setAllowTranslate(true);
 
             }
 
@@ -189,12 +180,12 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     }
 
     private void getData() {
-        String siteName = mapPath.substring(0, mapPath.indexOf(File.separator));
-        String floorName = mapPath.substring(mapPath.indexOf(File.separator) + 1, mapPath.indexOf("."));
-        Element rootElement = XmlUntils.getRootElement(Constant.DATA_PATH + File.separator + siteName + File.separator + "project.xml");
+        siteName = mapPath.substring(0, mapPath.indexOf(File.separator));
+        floorName = mapPath.substring(mapPath.indexOf(File.separator) + 1, mapPath.indexOf("."));
+        Document document = XmlUntils.getDocument(Constant.DATA_PATH + File.separator + siteName + File.separator + "project.xml");
+        Element rootElement = XmlUntils.getRootElement(document);
         Element floors = XmlUntils.getElementByName(rootElement, "Floors");
         List<Element> floorList = XmlUntils.getElementListByName(floors, "Floor");
-        boolean flag = false;
         for (Element element : floorList) {
             //如果是同一楼层
             if (floorName.equals(XmlUntils.getAttributeValueByName(element, "floorCode"))) {
@@ -213,21 +204,10 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                         prruInfoShape.setBind(true);
                         prruInfoShape.setPrruShowType(PrruInfoShape.pRRUType.inArea);
                     }
-                    if (!l1) {
-                        num++;
-                        if (num == 3) {
-                            l1 = true;
-                        }
 
-                        mFloorMap.addShape(prruInfoShape, false);
-                    }
+                    mFloorMap.addShape(prruInfoShape, false);
 
                 }
-                flag = true;
-                break;
-            }
-
-            if (flag) {
                 break;
             }
         }
@@ -238,9 +218,8 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.menu_bind:
-                    if (mNowSelectPrru != null) {
-                        mNowSelectPrru.setBind(true);
-                        mNowSelectPrru.setPrruShowType(PrruInfoShape.pRRUType.inArea);
+                    if (mNowSelectPrru == null) {
+                        return;
                     }
                     getOtherRxPermission(mPermission, new PerMissonListener() { //使用前  先判断权限有没有开启
 
@@ -266,7 +245,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
 
                         @Override
                         public void havePermission() {
-                            openZxing();
+                            //openZxing();
                         }
 
                         @Override
@@ -276,6 +255,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                     });
                     break;
                 case R.id.menu_move:
+                    //TODO 增加选择移动原因的窗口
                     float centerX = mNowSelectPrru.getCenterX();  //获取中心点xy
                     float centerY = mNowSelectPrru.getCenterY();
                     redPrruInfoShape.setValues(centerX, centerY);
@@ -285,7 +265,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                     tempPrruInfoShape = mNowSelectPrru;
                     mFloorMap.removeShape(mNowSelectPrru.getTag());
                     mFloorMap.setShowBubble(false);
-                    showToast("请长按红色pRRU进行位置修改");
+                    showToast("请长按红色pRRU拖动到移动的位置");
                     break;
                 case R.id.menu_camera:
                     //做权限判断
@@ -345,7 +325,6 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                 }
             }
         });
-//        mMenuView.setVisibility(View.VISIBLE);
         mFloorMap.setOnShapeClickListener(new ShapeExtension.OnShapeActionListener() {
             @Override
             public void onCollectShapeClick(CollectPointShape collectPointShape, float f, float f2) {
@@ -406,7 +385,10 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                 if (result.getContents() == null) {
                     Toast.makeText(this, "取消", Toast.LENGTH_LONG).show();
                 } else {
-                    Toast.makeText(this, "扫描结果: " + result.getContents(), Toast.LENGTH_LONG).show();
+                    writeToXml(result.getContents());
+                    mNowSelectPrru.setBind(true);
+                    mNowSelectPrru.setPrruShowType(PrruInfoShape.pRRUType.inArea);
+                    Toast.makeText(this, "绑定成功: " + result.getContents(), Toast.LENGTH_LONG).show();
                 }
             }
         }
@@ -454,6 +436,29 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                 break;
         }
 
+    }
+
+    public void writeToXml(String esn) {
+        String xmlFilePath = Constant.DATA_PATH + File.separator + siteName + File.separator + "project.xml";
+        Document document = XmlUntils.getDocument(xmlFilePath);
+        Element rootElement = XmlUntils.getRootElement(document);
+        Element floors = XmlUntils.getElementByName(rootElement, "Floors");
+        List<Element> floorList = XmlUntils.getElementListByName(floors, "Floor");
+        for (Element element : floorList) {
+            //如果是同一楼层
+            if (floorName.equals(XmlUntils.getAttributeValueByName(element, "floorCode"))) {
+                List<Element> nes = XmlUntils.getElementListByName(XmlUntils.getElementByName(element, "NEs"), "NE");
+                for (Element ne : nes) {
+                    if (XmlUntils.getAttributeValueByName(ne, "id").equals(mNowSelectPrru.getId())) {
+                        Log.e("XHF", "");
+                        XmlUntils.setAttributeValueByName(ne, "esn", esn);
+                        XmlUntils.saveDocument(document, new File(xmlFilePath));
+                        break;
+                    }
+                }
+                break;
+            }
+        }
     }
 
     @Override
@@ -515,7 +520,6 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         File mediaFile;
         if (type == TYPE_TAKE_PHOTO) {
             mediaFile = new File(mediaStorageDir.getPath() + File.separator + "IMG_" + timeStamp + ".jpg");
-            ffile = mediaFile;
         } else {
             return null;
         }
@@ -535,7 +539,6 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         File mediaFile;
         if (type == TYPE_TAKE_PHOTO) {
             mediaFile = new File(mediaStorageDir.getPath() + File.separator + "IMG_" + timeStamp + ".jpg");
-            ffile = mediaFile;
         } else {
             return null;
         }
@@ -589,6 +592,44 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                 new AlertDialog.Builder(mContext);
         normalDialog.setTitle(title);
         normalDialog.setMessage(message);
+        normalDialog.setPositiveButton("确定",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        showToast("pRRU位置修改成功");
+                        tempPrruInfoShape.setValues(redPrruInfoShape.getCenterX(), redPrruInfoShape.getCenterY());
+                        mFloorMap.removeShape("temp"); //移除红色
+                        mFloorMap.addShape(tempPrruInfoShape, false);//还原
+                        mFloorMap.setShowBubble(true);
+                    }
+                });
+        normalDialog.setNegativeButton("取消",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        showToast("已取消修改");
+                        mFloorMap.removeShape("temp"); //移除红色
+                        mFloorMap.addShape(tempPrruInfoShape, false);//还原
+                        tempPrruInfoShape = null;
+                        mFloorMap.setShowBubble(true);
+                    }
+                });
+        // 显示
+        normalDialog.show();
+    }
+
+    private void showChooseDialog(){
+        final AlertDialog.Builder normalDialog =
+                new AlertDialog.Builder(mContext);
+        final String[] items = new String[] { "北京", "上海", "广州", "深圳" };
+        normalDialog.setTitle("请选择移动原因");
+        normalDialog.setSingleChoiceItems(items, 0, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Toast.makeText(FloorMapActivity.this, items[which],
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
         normalDialog.setPositiveButton("确定",
                 new DialogInterface.OnClickListener() {
                     @Override
