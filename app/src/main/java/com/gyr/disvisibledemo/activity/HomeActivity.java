@@ -7,38 +7,36 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.gyr.disvisibledemo.R;
 import com.gyr.disvisibledemo.adapter.RvGroupAdapter;
 import com.gyr.disvisibledemo.adapter.RvMemberAdapter;
-import com.gyr.disvisibledemo.adapter.RvSearchAdapter;
 import com.gyr.disvisibledemo.bean.FloorModel;
 import com.gyr.disvisibledemo.bean.SiteModel;
 import com.gyr.disvisibledemo.framework.activity.BaseActivity;
+import com.gyr.disvisibledemo.framework.utils.StringUtil;
 import com.gyr.disvisibledemo.util.BlueUntils;
 import com.gyr.disvisibledemo.util.Constant;
 import com.gyr.disvisibledemo.util.FileUtils;
+import com.gyr.disvisibledemo.util.XmlUntils;
+import com.gyr.disvisibledemo.util.ZipUtils;
 import com.gyr.disvisibledemo.util.ZipUtils2;
 import com.gyr.disvisibledemo.view.popup.LoadingDialog;
 import com.leon.lfilepickerlibrary.LFilePicker;
 import com.zaaach.toprightmenu.MenuItem;
 import com.zaaach.toprightmenu.TopRightMenu;
+
+import org.dom4j.Document;
+import org.dom4j.Element;
 
 import java.io.File;
 import java.io.IOException;
@@ -160,7 +158,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                         showToast("本机没有找到蓝牙硬件，无法使用蓝牙功能！");
                     }
                     BluetoothAdapter mAdapter = BlueUntils.getBluetoothAdapter();
-
                     if (!mAdapter.isEnabled()) {
                         //弹出对话框提示用户是后打开
                         Intent enabler = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -171,12 +168,10 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                     }
                     break;
                 case 1:
-                    showNormalDialog("合并", "确定进行合并操作吗？");
+                    showMergeDialog("合并", "确定进行合并操作吗？",siteName);
                     break;
                 case 2:
-                    String path = Constant.DATA_PATH + File.separator + siteName;
-                    FileUtils.deleteDir(new File(path));
-                    showNormalDialog("删除", "确定进行删除操作吗？");
+                    showDeleteDialog("删除", "确定进行删除操作吗？",siteName);
                     break;
                 default:
                     showToast("未知的点击操作" + type);
@@ -185,7 +180,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
         }
     };
 
-    private void showNormalDialog(String title, String message) {
+    private void showDeleteDialog(String title, String message, final String siteName) {
         /* @setIcon 设置对话框图标
          * @setTitle 设置对话框标题
          * @setMessage 设置对话框消息提示
@@ -200,6 +195,60 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        String path = Constant.DATA_PATH + File.separator + siteName;
+                        FileUtils.deleteDir(new File(path));
+                        Toast.makeText(mContext, "操作成功", Toast.LENGTH_SHORT).show();
+                        initSiteAndFloor();
+                        mRvGroupAdapter.notifyDataSetChanged();
+                    }
+                });
+        normalDialog.setNegativeButton("关闭",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //...To-do
+                    }
+                });
+        // 显示
+        normalDialog.show();
+    }
+
+    private void showMergeDialog(String title, String message, final String siteName) {
+        /* @setIcon 设置对话框图标
+         * @setTitle 设置对话框标题
+         * @setMessage 设置对话框消息提示
+         * setXXX方法返回Dialog对象，因此可以链式设置属性
+         */
+        final AlertDialog.Builder normalDialog =
+                new AlertDialog.Builder(mContext);
+//        normalDialog.setIcon(R.drawable.icon_dialog);
+        normalDialog.setTitle(title);
+        normalDialog.setMessage(message);
+        normalDialog.setPositiveButton("确定",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String filePath;
+                        filePath = DIRECTION_BLUETOOTH_0;
+                        File file = new File(filePath);
+                        if(!file.exists()){
+                            filePath = DIRECTION_BLUETOOTH_1;
+                            file = new File(filePath);
+                        }
+                        if(file.isDirectory()){
+                            File[] files = file.listFiles();
+                            for (File newFile : files){
+                                if(FileUtils.isZipFile(newFile) &&  newFile.getName().contains(siteName)){
+                                    ZipUtils.unzip("",newFile.getAbsolutePath());
+                                    File projectFile = new File(newFile.getParent() + File.separator + siteName + File.separator + "project.xml");
+                                    if(projectFile.exists()){
+                                        String siteFilePath =  Constant.DATA_PATH + File.separator + siteName + File.separator + "project.xml";
+                                        String bluetoothFilePath = projectFile.getAbsolutePath();
+                                        MergeData(siteFilePath,bluetoothFilePath);
+                                    }
+                                }
+                            }
+                        }
                         Toast.makeText(mContext, "操作成功", Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -212,6 +261,46 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 });
         // 显示
         normalDialog.show();
+    }
+
+
+    private void MergeData(String siteFilePath, String bluetoothFilePath) {
+        Document document = XmlUntils.getDocument(siteFilePath);
+        Element rootElement = XmlUntils.getRootElement(document);
+        Element floors = XmlUntils.getElementByName(rootElement, "Floors");
+        List<Element> siteFloorList = XmlUntils.getElementListByName(floors, "Floor");
+        List<Element> bluetoothFloorList = getElements(bluetoothFilePath);
+        for (Element bluetootuElement : bluetoothFloorList) {
+            String bluetoothFloorCode = XmlUntils.getAttributeValueByName(bluetootuElement, "floorCode");
+            for(Element siteElement : siteFloorList){
+                if(bluetoothFloorCode.equals(XmlUntils.getAttributeValueByName(siteElement,"floorCode"))){
+                    List<Element> nes = XmlUntils.getElementListByName(XmlUntils.getElementByName(bluetootuElement, "NEs"), "NE");
+                    for (Element ne : nes) {
+                        String esn = XmlUntils.getAttributeValueByName(ne, "esn");
+                        if (!StringUtil.isNullOrEmpty(esn)) {
+                            List<Element> bluetoothNes = XmlUntils.getElementListByName(XmlUntils.getElementByName(bluetootuElement, "NEs"), "NE");
+                            for (Element bluetoothNe : bluetoothNes){
+                                if(XmlUntils.getAttributeValueByName(ne, "id").equals(XmlUntils.getAttributeValueByName(bluetoothNe, "id"))){
+                                    XmlUntils.setAttributeValueByName(ne,"esn",esn);
+                                    XmlUntils.saveDocument(document,new File(siteFilePath));
+                                    break;
+                                }
+                            }
+                        }
+
+                    }
+                    break;
+                }
+            }
+
+        }
+    }
+
+    private List<Element> getElements(String path) {
+        Document document = XmlUntils.getDocument(path);
+        Element rootElement = XmlUntils.getRootElement(document);
+        Element floors = XmlUntils.getElementByName(rootElement, "Floors");
+        return XmlUntils.getElementListByName(floors, "Floor");
     }
 
 
