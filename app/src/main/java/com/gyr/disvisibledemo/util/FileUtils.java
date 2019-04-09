@@ -1,6 +1,7 @@
 package com.gyr.disvisibledemo.util;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,5 +68,47 @@ public class FileUtils {
             }
         }
         return filename;
+    }
+
+    public static void copyDir(String sourcePath, String newPath) throws IOException {
+        File file = new File(sourcePath);
+        File[] filePath = file.listFiles();
+
+        File newFile = new File(newPath);
+
+        if (!newFile.exists()) {
+            newFile.mkdir();
+        }else {
+            deleteDir(newFile);
+            newFile.mkdir();
+        }
+
+        for (File myFile : filePath){
+            if(myFile.isDirectory()){
+                copyDir(myFile.getAbsolutePath(),newPath + File.separator + myFile.getName());
+            }else {
+                copyFile(myFile.getAbsolutePath(), newPath + File.separator + myFile.getName());
+            }
+        }
+    }
+
+    public static void copyFile(String oldPath, String newPath) throws IOException {
+        File oldFile = new File(oldPath);
+        File file = new File(newPath);
+        FileInputStream in = new FileInputStream(oldFile);
+        FileOutputStream out = new FileOutputStream(file);;
+
+        byte[] buffer=new byte[2097152];
+        int readByte = 0;
+        while((readByte = in.read(buffer)) != -1){
+            out.write(buffer, 0, readByte);
+        }
+        in.close();
+        out.close();
+    }
+
+    public static String getNameWithoutSuffix(File file){
+        String fileName = file.getName();
+        return fileName.substring(0, fileName.lastIndexOf("."));
     }
 }

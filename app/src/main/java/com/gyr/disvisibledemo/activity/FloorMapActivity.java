@@ -57,7 +57,7 @@ import static com.google.zxing.integration.android.IntentIntegrator.REQUEST_CODE
 
 public class FloorMapActivity extends BaseActivity implements View.OnClickListener {
     private static final int CODE_OPEN_CAMERA = 1;
-    private static final String IMAGE_ROOT_PATH = Environment.getExternalStorageState() + File.separator + "Tester";
+//    private static final String IMAGE_ROOT_PATH = Environment.getExternalStoragePublicDirectory().getPath()+ File.separator + "Tester";
     private PrruInfoShape mNowSelectPrru;
     private Context mContext;
     private boolean mFirst = false;
@@ -70,6 +70,8 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     private LinearLayout mBack;
     private LinearLayout mAdd;
     private ImageMap1 mFloorMap; //地图
+
+    private String item;
 
     public final int TYPE_TAKE_PHOTO = 1;//Uri获取类型判断
     private static final int CODE_TAKE_PHOTO = 1;// 拍照
@@ -120,7 +122,6 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         mBitmap = BitmapFactory.decodeFile(Constant.DATA_PATH + File.separator + mapPath);
         mFloorMap.setMapBitmap(mBitmap);
         mFloorMap.setAllowRotate(false); //不能转动
-        mFloorMap.setAllowTranslate(false);
         mFloorMap.setPrruListener(new HighlightImageView1.PrruModifyHListener() {   //监听地图上prru移动事件
             @Override
             public void startTranslate(PrruInfoShape shape, float x, float y) {
@@ -383,7 +384,13 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
 
         switch (requestCode) {
             case CODE_TAKE_PHOTO:  //拍照返回后获取图片
+                String photo = Constant.DATA_PATH + File.separator + siteName + File.separator + "image" + File.separator + mNowSelectPrru.getId();
+                File photoFile = new File(photo);
                 if (resultCode == RESULT_OK) {
+                    if(photoFile.exists() && photoFile.listFiles().length >= 5){
+                        Toast.makeText(mContext, "该PRRU已经有5张照片，不能继续拍照", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                     if (data != null) {
                         if (data.hasExtra("data")) {
                             //有数据
@@ -415,9 +422,9 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                             imgPath = photoUri.getPath();
                         }
                     }
+                    copyPhototoPath(imgPath, photo);
                 }
-                Toast.makeText(mContext, "Path:" + imgPath, Toast.LENGTH_SHORT).show();
-                copyPhototoPath(imgPath, IMAGE_ROOT_PATH);
+                showCameraDialog("提示","是否继续拍照？");
                 break;
             default:
                 break;
@@ -467,7 +474,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
     private void openZxing() {
         // 打开扫描界面扫描条形码或二维码
         IntentIntegrator intentIntegrator = new IntentIntegrator(this);
-        intentIntegrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES); //设置扫描的类型
+        intentIntegrator.setDesiredBarcodeFormats(IntentIntegrator.ALL_CODE_TYPES); //设置扫描的类型
         intentIntegrator.setOrientationLocked(false);  //方向锁定
         intentIntegrator.setCaptureActivity(PortraitZxingActivity.class);
         intentIntegrator.setCameraId(0); //前置相机还是后置相机
@@ -544,9 +551,13 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
      */
     private void copyPhototoPath(String oldPath, String newPath) {
         File file = new File(oldPath);
-        String name = file.getName(); //获取文件名
-        File newFile = new File(newPath, name);
+        File path = new File(newPath);
+        File newFile = new File(newPath, file.getName());
         try {
+            if(!path.exists())
+            {
+                path.mkdirs();
+            }
             if (!newFile.exists()) {
                 newFile.createNewFile();
             }
@@ -560,7 +571,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
             out.close();// 关闭输入输出流
             in.close();
         } catch (Exception e) {
-
+            Log.e("XHF-e","e="+e.toString());
         }
     }
 
@@ -614,15 +625,37 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
         normalDialog.show();
     }
 
+    private void showCameraDialog(String title, String message) {
+        final AlertDialog.Builder normalDialog =
+                new AlertDialog.Builder(mContext);
+        normalDialog.setTitle(title);
+        normalDialog.setMessage(message);
+        normalDialog.setPositiveButton("确定",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        openCamera();
+                    }
+                });
+        normalDialog.setNegativeButton("取消",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                });
+        // 显示
+        normalDialog.show();
+    }
+
     private void showChooseDialog(){
         final AlertDialog.Builder normalDialog =
                 new AlertDialog.Builder(mContext);
         final String[] items = new String[] { "现场人员不允许安装", "有障碍物", "没有电源", "重新规划", "其他" };
-        String move = items[4];
         normalDialog.setTitle("请选择移动原因");
         normalDialog.setSingleChoiceItems(items, 0, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                item = items[which];
                 Toast.makeText(FloorMapActivity.this, items[which],
                         Toast.LENGTH_SHORT).show();
             }
@@ -640,7 +673,9 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                         tempPrruInfoShape = mNowSelectPrru;
                         mFloorMap.removeShape(mNowSelectPrru.getTag());
                         mFloorMap.setShowBubble(false);
-
+                        Map<String, String> xmlValue = new HashMap<>();
+                        xmlValue.put("moveInfo",item);
+                        writeToXml(xmlValue);
                         showToast("请长按红色pRRU拖动到移动的位置");
                     }
                 });

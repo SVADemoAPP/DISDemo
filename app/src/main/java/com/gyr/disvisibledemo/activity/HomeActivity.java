@@ -235,21 +235,39 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                             filePath = DIRECTION_BLUETOOTH_1;
                             file = new File(filePath);
                         }
+                        boolean flag = false;
                         if(file.isDirectory()){
                             File[] files = file.listFiles();
                             for (File newFile : files){
                                 if(FileUtils.isZipFile(newFile) &&  newFile.getName().contains(siteName)){
-                                    ZipUtils.unzip("",newFile.getAbsolutePath());
-                                    File projectFile = new File(newFile.getParent() + File.separator + siteName + File.separator + "project.xml");
+                                    if(FileUtils.getNameWithoutSuffix(newFile).equals(siteName)){
+                                        continue;
+                                    }
+                                    UnZipData(newFile,filePath);
+                                    File projectFile = new File(filePath + File.separator +siteName + File.separator + "project.xml");
                                     if(projectFile.exists()){
                                         String siteFilePath =  Constant.DATA_PATH + File.separator + siteName + File.separator + "project.xml";
-                                        String bluetoothFilePath = projectFile.getAbsolutePath();
-                                        MergeData(siteFilePath,bluetoothFilePath);
+                                        String photo = Constant.DATA_PATH + File.separator + siteName + File.separator + "imge";
+                                        String sourcePath = filePath + File.separator + siteName + File.separator + "image";
+                                        MergeData(siteFilePath,projectFile.getPath());
+                                        if(new File(sourcePath).exists()){
+                                            try {
+                                                FileUtils.copyDir(sourcePath,photo);
+                                            } catch (IOException e) {
+                                                Log.e(HomeActivity.class.toString(),"复制文件失败");
+                                            }
+                                        }
+                                        flag = true;
+                                        FileUtils.deleteDir(new File(filePath + File.separator + siteName));
                                     }
                                 }
                             }
                         }
-                        Toast.makeText(mContext, "操作成功", Toast.LENGTH_SHORT).show();
+                        if(flag){
+                            Toast.makeText(mContext, "合并成功", Toast.LENGTH_SHORT).show();
+                        }else {
+                            Toast.makeText(mContext, "没有检测到可合并的文件", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
         normalDialog.setNegativeButton("关闭",
@@ -274,15 +292,17 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
             String bluetoothFloorCode = XmlUntils.getAttributeValueByName(bluetootuElement, "floorCode");
             for(Element siteElement : siteFloorList){
                 if(bluetoothFloorCode.equals(XmlUntils.getAttributeValueByName(siteElement,"floorCode"))){
-                    List<Element> nes = XmlUntils.getElementListByName(XmlUntils.getElementByName(bluetootuElement, "NEs"), "NE");
-                    for (Element ne : nes) {
+                    List<Element> bluetoothNes = XmlUntils.getElementListByName(XmlUntils.getElementByName(bluetootuElement, "NEs"), "NE");
+                    for (Element ne : bluetoothNes) {
                         String esn = XmlUntils.getAttributeValueByName(ne, "esn");
                         if (!StringUtil.isNullOrEmpty(esn)) {
-                            List<Element> bluetoothNes = XmlUntils.getElementListByName(XmlUntils.getElementByName(bluetootuElement, "NEs"), "NE");
-                            for (Element bluetoothNe : bluetoothNes){
-                                if(XmlUntils.getAttributeValueByName(ne, "id").equals(XmlUntils.getAttributeValueByName(bluetoothNe, "id"))){
-                                    XmlUntils.setAttributeValueByName(ne,"esn",esn);
-                                    XmlUntils.saveDocument(document,new File(siteFilePath));
+                            List<Element> siteNes = XmlUntils.getElementListByName(XmlUntils.getElementByName(siteElement, "NEs"), "NE");
+                            for (Element siteNe : siteNes){
+                                if(XmlUntils.getAttributeValueByName(ne, "id").equals(XmlUntils.getAttributeValueByName(siteNe, "id"))){
+                                    XmlUntils.setAttributeValueByName(siteNe,"esn",esn);
+                                    XmlUntils.setAttributeValueByName(siteNe,"moveInfo",XmlUntils.getAttributeValueByName(ne, "moveInfo"));
+                                    XmlUntils.setAttributeValueByName(siteNe,"x",XmlUntils.getAttributeValueByName(ne, "x"));
+                                    XmlUntils.setAttributeValueByName(siteNe,"y",XmlUntils.getAttributeValueByName(ne, "y"));
                                     break;
                                 }
                             }
@@ -292,6 +312,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                     break;
                 }
             }
+            XmlUntils.saveDocument(document,new File(siteFilePath));
 
         }
     }
@@ -315,12 +336,12 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
             if (requestCode == REQUESTCODE_FROM_ACTIVITY) {
                 ArrayList<String> paths = data.getStringArrayListExtra("paths"); //获取返回文件路径 （可以有多个）
                 File file = new File(paths.get(0));
-                UnZipData(file); //解压文件
+                UnZipData(file,Constant.DATA_PATH); //解压文件
             } else if (requestCode == REQUESTCODE_SELECTOR_FILE) {
                 String filePath = data.getStringExtra("filePath");
                 Toast.makeText(mContext, "选择" + filePath, Toast.LENGTH_SHORT).show(); //todo
                 File file = new File(filePath);
-                UnZipData(file); //解压文件
+                UnZipData(file,Constant.DATA_PATH); //解压文件
             }
         }
     }
@@ -330,10 +351,10 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
      *
      * @param file
      */
-    private void UnZipData(File file) {
+    private void UnZipData(File file, String dirPath) {
         if (FileUtils.isZipFile(file)) {
             try {
-                ZipUtils2.UnZipFolder(file.getPath(), Constant.DATA_PATH);
+                ZipUtils2.UnZipFolder(file.getPath(), dirPath);
             } catch (Exception e) {
                 Log.e("XHF_ERROR", "zip=" + e.toString());
                 Toast.makeText(mContext, "文件解析出错，请核对是否是该文件", Toast.LENGTH_SHORT).show();
@@ -519,7 +540,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener {
                 .withStartPath(direction)//打开文件初始路径
                 .withMutilyMode(false)  //false 为单选 true为多选
                 .withIsGreater(false)
-                .withFileSize(500 * 1024 * 10)   //文件大小过滤器
+                .withFileSize(1024 * 1000 * 50)   //文件大小过滤器
                 .start();
     }
 
