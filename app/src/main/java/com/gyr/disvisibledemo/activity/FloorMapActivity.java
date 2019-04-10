@@ -132,7 +132,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                     }
                     redPrruInfoShape.setValues(x, y);
                     //开始移动prru时禁止移动地图
-                    mFloorMap.setAllowTranslate(false);
+                    mFloorMap.setTranslateMove(false);
                 }
 
             }
@@ -140,12 +140,12 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
             @Override
             public void moveTranslate(PrruInfoShape shape, float x, float y) {
                 Log.e("XHF_move", "x=" + x + "-----y=" + y);
+
                 if (tempPrruInfoShape != null) {
                     if (!shape.getMove()) {
                         return;
                     }
                     redPrruInfoShape.setValues(x, y);
-                    mFloorMap.setAllowTranslate(false);
                 }
             }
 
@@ -159,7 +159,7 @@ public class FloorMapActivity extends BaseActivity implements View.OnClickListen
                     redPrruInfoShape.setValues(x, y);
                     showNormalDialog("pRRU位置修改", "确定本次修改？");
                 }
-
+                mFloorMap.setTranslateMove(true);
             }
 
             @Override

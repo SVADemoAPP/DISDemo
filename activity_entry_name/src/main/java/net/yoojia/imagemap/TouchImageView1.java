@@ -59,7 +59,7 @@ public class TouchImageView1 extends android.support.v7.widget.AppCompatImageVie
     private float saveRotate;
     private OnTouchListener touchListener;
     private PrruModifyListener pRUUlistener;
-
+    private boolean transmovelate=true;
     public void setPRRUMoveListener(PrruModifyListener moveListener) {
         pRUUlistener = moveListener;
     }
@@ -220,6 +220,7 @@ public class TouchImageView1 extends android.support.v7.widget.AppCompatImageVie
                 if (TouchImageView1.this.isAllowRotate) {
                     TouchImageView1.this.mRotateGestureDetector.onTouchEvent(event);
                 }
+
                 switch (event.getAction() & 255) {
                     case MotionEvent.ACTION_DOWN:
                         this.mDownPoint = new PointF(event.getX(), event.getY());
@@ -267,20 +268,24 @@ public class TouchImageView1 extends android.support.v7.widget.AppCompatImageVie
                                 this.lastDragTime = this.dragTime;
                                 TouchImageView1.this.lastOffsetX = this.mMovePoint.x - this.mDownPoint.x;
                                 TouchImageView1.this.lastOffsetY = this.mMovePoint.y - this.mDownPoint.y;
+
+                                rlPoint = new PointF(event.getX(), event.getY());
+                                singlePoint = mImageViewHelper.getSinglePoint(imageUsingMatrix, saveRotate, rlPoint);
+                                if (mImageViewHelper.pointInArea(imageUsingMatrix, saveRotate, rlPoint)) {
+                                    pRUUlistener.moveTranslate(singlePoint.x, singlePoint.y); //xhf 获取长按移动xy
+                                }
                                 if (TouchImageView1.this.bLongClick) {
                                     this.curPoint.x = event.getX();
                                     this.curPoint.y = event.getY();
-                                    rlPoint = new PointF(event.getX(), event.getY());
-                                    singlePoint = mImageViewHelper.getSinglePoint(imageUsingMatrix, saveRotate, rlPoint);
-                                    if (mImageViewHelper.pointInArea(imageUsingMatrix, saveRotate, rlPoint)) {
-                                        pRUUlistener.moveTranslate(singlePoint.x, singlePoint.y); //xhf 获取长按移动xy
-                                    }
                                     if (TouchImageView1.this.mImageViewHelper.pointInArea(TouchImageView1.this.imageUsingMatrix, TouchImageView1.this.saveRotate, this.curPoint)) {
                                         this.point1 = TouchImageView1.this.mImageViewHelper.getSinglePoint(TouchImageView1.this.imageUsingMatrix, TouchImageView1.this.saveRotate, this.curPoint);
                                         TouchImageView1.this.onViewLongClickShapeMove(this.point1.x, this.point1.y);
                                     }
                                 } else {
-                                    TouchImageView1.this.postMatrixTranslate(TouchImageView1.this.lastOffsetX, TouchImageView1.this.lastOffsetY);
+                                    if(transmovelate)
+                                    {
+                                        TouchImageView1.this.postMatrixTranslate(TouchImageView1.this.lastOffsetX, TouchImageView1.this.lastOffsetY);
+                                    }
                                 }
                                 this.mDownPoint.set(this.mMovePoint);
                                 break;
@@ -597,5 +602,9 @@ public class TouchImageView1 extends android.support.v7.widget.AppCompatImageVie
         void endTranslate(float x, float y);
         void touchOutside(float x, float y);
 
+    }
+
+    public void setTranslate(boolean flag){
+        transmovelate=flag;
     }
 }

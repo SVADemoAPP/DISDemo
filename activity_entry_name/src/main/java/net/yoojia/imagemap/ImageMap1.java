@@ -135,7 +135,9 @@ public class ImageMap1 extends FrameLayout implements ShapeExtension, OnShapeAct
     public void setMapBitmap(Bitmap bitmap) {
         this.highlightImageView.setImageBitmap(bitmap);
     }
-
+    public void setTranslateMove(boolean flag){
+        this.highlightImageView.setTranslate(flag);
+    }
     public void setMapPicture(Picture picture) {
         setMapDrawable(new PictureDrawable(picture));
     }
